@@ -48,7 +48,7 @@ model Content {
   meta       String /// @zod.custom.use(MetaSchema)
   categoryId String
 
-  status   String /// @zod.custom.use(StatusEnum)
+  status   String /// @zod.custom.use(StatusEnum.default("PENDING"))
   userId   String
   modified DateTime @updatedAt /// @zod.custom.omit([input])
   created  DateTime @default(now()) /// @zod.custom.omit([input])

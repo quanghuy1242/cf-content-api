@@ -4,6 +4,7 @@ import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { DbConstraintException } from "exceptions";
 import { Hono } from "hono";
 import { auth } from "middlewares/auth";
+import { restrict, restrictStatusField } from "middlewares/permission";
 import {
   ContentSchema,
   ContentUncheckedCreateInputSchema,
@@ -18,6 +19,7 @@ contents.use(auth);
 
 contents.get(
   "/:id",
+  restrict(["read:content"]),
   zValidator(
     "param",
     z.object({
@@ -39,9 +41,11 @@ contents.get(
 
 contents.post(
   "",
+  restrict(["write:content"]),
   zValidator("json", ContentUncheckedCreateInputSchema),
   async (c) => {
     const input = c.req.valid("json");
+    restrictStatusField(c, input.status, "publish:content");
     const data = await withPrisma(c).content.create({ data: input });
     return c.json(ContentSchema.parse(data), 201);
   },
@@ -49,6 +53,7 @@ contents.post(
 
 contents.get(
   "",
+  restrict(["read:content"]),
   zValidator(
     "query",
     z.object({
@@ -87,17 +92,19 @@ contents.get(
 
 contents.patch(
   "/:id",
+  restrict(["write:content"]),
   zValidator("json", ContentUpdateInputSchema),
   zValidator("param", z.object({ id: z.string().uuid() })),
   async (c) => {
     const p = withPrisma(c);
     const baseQuery = { id: c.req.valid("param").id };
-    let data = await p.content.findFirst({
+    const data = await p.content.findFirst({
       where: baseQuery,
     });
     if (!data) {
       throw new DbConstraintException({ message: "Not found" });
     }
+    restrictStatusField(c, data.status, "publish:content");
     const content = await p.content.update({
       where: baseQuery,
       data: c.req.valid("json"),

@@ -1,5 +1,5 @@
-import { AUTH_HEADER_KEY, AUTH_TYPE, USER_KEY } from "const";
-import { AuthException, AuthForbidException } from "exceptions";
+import { AUTH_HEADER_KEY, AUTH_TYPE } from "const";
+import { AuthException } from "exceptions";
 import { Context } from "hono";
 import { env } from "hono/adapter";
 import { createMiddleware } from "hono/factory";
@@ -52,23 +52,6 @@ export const auth = createMiddleware(async (c: Context, next) => {
     issuer: AUTH0_ISSUER,
     audience: AUTH0_AUDIENCE,
   });
-  (c as Context<HonoApp, any, {}>).set("user", { payload, protectedHeader });
+  (c as Context<HonoApp, string, object>).set("user", { payload, protectedHeader });
   await next();
 });
-
-export const adminOnly = createMiddleware(
-  async (c: Context<HonoApp, any, {}>, next) => {
-    const { ENVIRONMENT, AUTH0_NAMESPACE } = env(c) as unknown as Env;
-    if (ENVIRONMENT == "dev") {
-      await next();
-      return;
-    }
-
-    const { payload } = c.get("user");
-    const roles = payload[`${AUTH0_NAMESPACE}roles`] as string[];
-    if (!roles.includes("Admin")) {
-      throw new AuthForbidException({ message: "Missing permission!" });
-    }
-    await next();
-  },
-);

@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { DbConstraintException } from "exceptions";
 import { Hono } from "hono";
-import { adminOnly, auth } from "middlewares/auth";
+import { auth } from "middlewares/auth";
+import { adminOnly } from "middlewares/permission";
 import {
   CategorySchema,
   CategoryUncheckedCreateInputSchema,
@@ -88,7 +89,7 @@ categories.patch(
   async (c) => {
     const p = withPrisma(c);
     const baseQuery = { id: c.req.valid("param").id };
-    let data = await p.content.findFirst({
+    const data = await p.content.findFirst({
       where: baseQuery,
     });
     if (!data) {

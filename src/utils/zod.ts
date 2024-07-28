@@ -18,13 +18,13 @@ export const objToJson = (v: object) => {
 
 export const arrFromStr = z
   .string()
-  .transform((str, ctx): z.arrayOutputType<z.ZodString> => {
+  .transform((str): z.arrayOutputType<z.ZodString> => {
     return str.split(",");
   });
 
 export const strFromArr = z
   .string()
   .array()
-  .transform((strs, ctx) => {
+  .transform((strs) => {
     return strs.join(",");
   });

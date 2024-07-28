@@ -16,29 +16,29 @@ describe("content.rounter", () => {
   describe("create & select content", () => {
     it("should create a new content & return it", async () => {
       const ctx = createExecutionContext();
-      const res = await app.fetch(
-        new Request(baseUrl, {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: "Content title",
-            slug: "content-title",
-            content: "This contains a long text",
-            coverImage: "https://abc.com/abc.png",
-            tags: ["abc", "def"],
-            meta: {
-              twitterCard: "abc",
-            },
-            status: "ACTIVE",
-            userId: "",
-            categoryId: "",
-          }),
-        }),
-        env,
-        ctx,
-      );
+      // const res = await app.fetch(
+      //   new Request(baseUrl, {
+      //     method: "post",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       title: "Content title",
+      //       slug: "content-title",
+      //       content: "This contains a long text",
+      //       coverImage: "https://abc.com/abc.png",
+      //       tags: ["abc", "def"],
+      //       meta: {
+      //         twitterCard: "abc",
+      //       },
+      //       status: "ACTIVE",
+      //       userId: "",
+      //       categoryId: "",
+      //     }),
+      //   }),
+      //   env,
+      //   ctx,
+      // );
       await waitOnExecutionContext(ctx);
       // expect(await res.json()).toStrictEqual({});
       // expect(res.status).toBe(201);

@@ -1,7 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { DbConstraintException } from "exceptions";
 import { Hono } from "hono";
-import { adminOnly, auth } from "middlewares/auth";
+import { auth } from "middlewares/auth";
+import { adminOnly } from "middlewares/permission";
 import {
   UserSchema,
   UserUncheckedCreateInputSchema,
