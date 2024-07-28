@@ -1,22 +1,47 @@
 {
-	"name": "cloudflare-workers-openapi",
+	"name": "cf-content-api",
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"test:unit": "vitest run .",
+		"test:unit:ui": "vitest run . --ui",
+		"lint": "eslint .",
+		"migration:local": "wrangler d1 migrations apply contents-db --local",
+		"migration:remote": "wrangler d1 migrations apply contents-db --remote",
+		"prisma:generate": "prisma generate"
 	},
 	"dependencies": {
-		"chanfana": "^2.0.2",
+		"@hono/zod-validator": "^0.2.2",
+		"@prisma/adapter-d1": "^5.17.0",
+		"@prisma/client": "^5.17.0",
 		"hono": "^4.4.7",
+		"jose": "^5.6.3",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.4.16",
 		"@cloudflare/workers-types": "^4.20240725.0",
+		"@eslint/js": "^9.8.0",
+		"@trivago/prettier-plugin-sort-imports": "^4.3.0",
+		"@types/eslint__js": "^8.42.3",
 		"@types/node": "20.8.3",
 		"@types/service-worker-mock": "^2.0.1",
-		"wrangler": "^3.60.3"
+		"eslint": "^8.57.0",
+		"prisma": "^5.17.0",
+		"typescript": "^5.5.4",
+		"typescript-eslint": "^7.17.0",
+		"vitest": "1.5.0",
+		"wrangler": "^3.60.3",
+		"zod-prisma-types": "^3.1.8"
+	},
+	"prettier": {
+		"tabWidth": 2,
+		"plugins": [
+			"@trivago/prettier-plugin-sort-imports"
+		]
 	}
 }

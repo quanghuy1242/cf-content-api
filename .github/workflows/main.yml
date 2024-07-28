@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - "**"
+  # pull_request:
+  #   branches:
+  #     - "**"
+
+jobs:
+  predeploy:
+    runs-on: ubuntu-latest
+    name: Code convention & Unit tests
+    env:
+      ENVIRONMENT: dev
+      AUTH0_NAMESPACE: abc.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.16.0"
+      - run: npm ci
+      - run: |
+          cat > .dev.vars << EOL
+          AUTH0_ISSUER=https://something.com/
+          AUTH0_AUDIENCE=https://api.something.com
+          PRISMA_CLIENT_FORCE_WASM=1
+          AUTH0_NAMESPACE=api.something.com/
+          ENVIRONMENT=dev
+          EOL
+      - run: npm run lint
+      - run: npm run test:unit
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: ["predeploy"]
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.16.0"
+      - run: npm ci
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          preCommands: npx wrangler d1 migrations apply contents-db --remote
