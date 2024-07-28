@@ -29,10 +29,10 @@ jobs:
           AUTH0_NAMESPACE=api.something.com/
           ENVIRONMENT=dev
           EOL
-      - run: npm run test:unit
       - run: npm run lint
+      - run: npm run test:unit
   deploy:
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     needs: ["predeploy"]
     runs-on: ubuntu-latest
     name: Deploy
