@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+generator zod {
+  provider = "npx zod-prisma-types"
+  output   = "../src/schema/generated/zod"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @unique
+  name         String
+  emailAddress String    @unique /// z.string().email()
+  contents     Content[]
+}
+
+/// @zod.import(["import { StatusEnum } from 'schema/content';"])
+model Category {
+  id          String @id @default(uuid()) /// @zod.custom.omit([input])
+  name        String @unique
+  description String
+
+  status   String /// @zod.custom.use(StatusEnum)
+  modified DateTime @updatedAt /// @zod.custom.omit([input])
+  created  DateTime @default(now()) /// @zod.custom.omit([input])
+
+  contents Content[]
+}
+
+/// @zod.import(["import { MetaSchema, TagSchema, StatusEnum } from 'schema/content';"])
+model Content {
+  id String @id @default(uuid()) /// @zod.custom.omit([input])
+
+  title      String @unique
+  slug       String @unique /// @zod.string.regex(/^[a-z0-9-_]*$/)
+  content    String
+  coverImage String /// @zod.string.url()
+  tags       String /// @zod.custom.use(TagSchema)
+  meta       String /// @zod.custom.use(MetaSchema)
+  categoryId String
+
+  status   String /// @zod.custom.use(StatusEnum)
+  userId   String
+  modified DateTime @updatedAt /// @zod.custom.omit([input])
+  created  DateTime @default(now()) /// @zod.custom.omit([input])
+
+  author   User     @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+}

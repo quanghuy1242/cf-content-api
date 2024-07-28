@@ -10,13 +10,14 @@
 		"lib": ["esnext"],
 		"listEmittedFiles": false,
 		"listFiles": false,
-		"moduleResolution": "node",
+		"moduleResolution": "Bundler",
 		"noFallthroughCasesInSwitch": true,
 		"pretty": true,
 		"resolveJsonModule": true,
 		"rootDir": ".",
 		"skipLibCheck": true,
-		"strict": false,
+		"strict": true,
+		"strictNullChecks": true,
 		"traceResolution": false,
 		"outDir": "",
 		"target": "esnext",
@@ -24,9 +25,11 @@
 		"types": [
 			"@types/node",
 			"@types/service-worker-mock",
-			"@cloudflare/workers-types/2023-07-01"
+			"@cloudflare/workers-types/2023-07-01",
+			"@cloudflare/vitest-pool-workers",
+			"./worker-configuration.d.ts"
 		]
 	},
 	"exclude": ["node_modules", "dist", "tests"],
-	"include": ["src", "scripts"]
+	"include": ["src", "scripts", "./"]
 }

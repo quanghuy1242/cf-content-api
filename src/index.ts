@@ -1,23 +1,21 @@
-import { fromHono } from "chanfana";
+import categories from "apis/categories";
+import contents from "apis/contents";
+import health from "apis/health";
+import users from "apis/users";
+import { exceptionHander } from "exceptions";
 import { Hono } from "hono";
-import { TaskCreate } from "./endpoints/taskCreate";
-import { TaskDelete } from "./endpoints/taskDelete";
-import { TaskFetch } from "./endpoints/taskFetch";
-import { TaskList } from "./endpoints/taskList";
 
 // Start a Hono app
 const app = new Hono();
 
-// Setup OpenAPI registry
-const openapi = fromHono(app, {
-	docs_url: "/",
-});
+// Configure middlewares
+app.onError(exceptionHander);
 
-// Register OpenAPI endpoints
-openapi.get("/api/tasks", TaskList);
-openapi.post("/api/tasks", TaskCreate);
-openapi.get("/api/tasks/:taskSlug", TaskFetch);
-openapi.delete("/api/tasks/:taskSlug", TaskDelete);
+// Configure routers
+app.route("/api/v1", contents);
+app.route("/api/v1", users);
+app.route("/api/v1", categories);
+app.route("", health);
 
 // Export the Hono app
 export default app;
