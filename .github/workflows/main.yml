@@ -12,6 +12,9 @@ jobs:
   predeploy:
     runs-on: ubuntu-latest
     name: Code convention & Unit tests
+    env:
+      ENVIRONMENT: dev
+      AUTH0_NAMESPACE: abc.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
