@@ -3,14 +3,34 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+      - "**"
+  pull_request:
+    branches:
+      - "**"
 
 jobs:
+  predeploy:
+    runs-on: ubuntu-latest
+    name: Code convention & Unit tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.16.0"
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run lint
   deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: ["predeploy"]
     runs-on: ubuntu-latest
     name: Deploy
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.16.0"
+      - run: npm ci
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
