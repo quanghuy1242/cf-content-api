@@ -8,7 +8,7 @@ import {
 import { randomUUID } from "crypto";
 import { describe, beforeEach, vi, it, expect } from "vitest";
 
-const baseUrl: string = "http://a.com/api/v1";
+const baseUrl: string = "http://a.com/api/v1/users";
 
 describe("user.rounter", () => {
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe("user.rounter", () => {
       // Insert it first
       const ctx = createExecutionContext();
       const res = await app.fetch(
-        new Request(baseUrl + "/users", {
+        new Request(baseUrl, {
           method: "post",
           headers: {
             "Content-Type": "application/json",
@@ -49,7 +49,7 @@ describe("user.rounter", () => {
       };
       await withPrismaFromW(env).user.create({ data });
       const res = await app.fetch(
-        new Request(baseUrl + "/users/" + data.id),
+        new Request(baseUrl + "/" + data.id),
         env,
         ctx,
       );
