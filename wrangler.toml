@@ -20,6 +20,7 @@ mode = "smart"
 AUTH0_ISSUER = "https://quanghuy1242.us.auth0.com/"
 AUTH0_AUDIENCE = "https://api.quanghuy.dev"
 AUTH0_NAMESPACE = "api.quanghuy.dev/"
+AUTH0_CLIENT_ID = "2YoFQibhNG7lKkaATofzxkQHYXVfHImt"
 ENVIRONMENT = "prod"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network

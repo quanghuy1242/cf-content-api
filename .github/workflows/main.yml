@@ -20,6 +20,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.16.0"
+          cache: npm
+      - name: Cache npm dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - run: npm ci
       - run: |
           cat > .dev.vars << EOL
@@ -42,6 +50,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.16.0"
+          cache: npm
+      - name: Cache npm dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - run: npm ci
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
