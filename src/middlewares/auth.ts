@@ -4,7 +4,6 @@ import { Context } from "hono";
 import { env } from "hono/adapter";
 import { createMiddleware } from "hono/factory";
 import { createLocalJWKSet, jwtVerify } from "jose";
-import { isValidM2m } from "utils/auth";
 
 const MISSING_AUTH_HEADER_TEXT: string = "Missing authentication header";
 const UNSUPPORTED_AUTH_TYPE: string = "Unsupported authentication type";
@@ -38,7 +37,7 @@ async function createRemoteJWKSet(ctx: Context, issuer: string) {
 }
 
 export const auth = createMiddleware(async (c: Context, next) => {
-  const { AUTH0_AUDIENCE, AUTH0_ISSUER, ENVIRONMENT, AUTH0_CLIENT_ID }: Env =
+  const { AUTH0_AUDIENCE, AUTH0_ISSUER, ENVIRONMENT }: Env =
     env(c);
 
   if (ENVIRONMENT == "dev") {
@@ -54,11 +53,6 @@ export const auth = createMiddleware(async (c: Context, next) => {
     issuer: AUTH0_ISSUER,
     audience: AUTH0_AUDIENCE,
   });
-
-  if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
-    await next();
-    return;
-  }
 
   (c as Context<HonoApp, string, object>).set("user", {
     payload,
