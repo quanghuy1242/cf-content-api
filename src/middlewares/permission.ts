@@ -2,16 +2,24 @@ import { AuthForbidException } from "exceptions";
 import { Context } from "hono";
 import { env } from "hono/adapter";
 import { createMiddleware } from "hono/factory";
+import { isValidM2m } from "utils/auth";
 
 export const adminOnly = createMiddleware(
   async (c: Context<HonoApp, string, object>, next) => {
-    const { ENVIRONMENT, AUTH0_NAMESPACE } = env(c) as unknown as Env;
+    const { ENVIRONMENT, AUTH0_NAMESPACE, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } =
+      env(c) as unknown as Env;
     if (ENVIRONMENT == "dev") {
       await next();
       return;
     }
 
     const { payload } = c.get("user");
+
+    if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
+      await next();
+      return;
+    }
+
     const roles = payload[`${AUTH0_NAMESPACE}roles`] as string[];
     if (!roles.includes("Admin")) {
       throw new AuthForbidException({ message: "Missing permission!" });
@@ -22,13 +30,21 @@ export const adminOnly = createMiddleware(
 
 export const restrict = (permissions: string[]) => {
   return createMiddleware(async (c: Context<HonoApp, string, object>, next) => {
-    const { ENVIRONMENT } = env(c) as unknown as Env;
+    const { ENVIRONMENT, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } = env(
+      c,
+    ) as unknown as Env;
     if (ENVIRONMENT == "dev") {
       await next();
       return;
     }
 
     const { payload } = c.get("user");
+
+    if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
+      await next();
+      return;
+    }
+
     const givenPermissions = payload["permissions"] as string[];
     if (!givenPermissions.every((p) => permissions.includes(p))) {
       throw new AuthForbidException({
@@ -44,11 +60,18 @@ export const restrictStatusField = (
   value: string,
   validPermission: string,
 ) => {
-  const { ENVIRONMENT } = env(c) as unknown as Env;
+  const { ENVIRONMENT, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } = env(
+    c,
+  ) as unknown as Env;
   if (ENVIRONMENT == "dev") {
     return;
   }
   const { payload } = c.get("user");
+
+  if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
+    return;
+  }
+
   const givenPermissions = payload["permissions"] as string[];
   if (value === "ACTIVE" && !givenPermissions.includes(validPermission)) {
     throw new AuthForbidException({
