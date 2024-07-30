@@ -19,12 +19,7 @@ export const restrict = (permissions: string[]) => {
       return;
     }
 
-    let payload = c.get("user")?.payload;
-    if (!payload) {
-      payload = {
-        permissions: [],
-      };
-    }
+    const payload = c.get("user")?.payload || { permissions: [] };
     const givenPermissions = (payload["permissions"] as string[]) || [];
     if (!givenPermissions.every((p) => permissions.includes(p))) {
       throw new AuthForbidException({
@@ -44,12 +39,7 @@ export const restrictStatusField = (
     return;
   }
 
-  let payload = c.get("user")?.payload;
-  if (!payload) {
-    payload = {
-      permissions: [],
-    };
-  }
+  const payload = c.get("user")?.payload || { permissions: [] };
   const givenPermissions = payload["permissions"] as string[];
   if (value === "ACTIVE" && !givenPermissions.includes(validPermission)) {
     throw new AuthForbidException({
