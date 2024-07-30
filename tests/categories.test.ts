@@ -11,12 +11,12 @@ import { describe, it, expect } from "vitest";
 
 const baseUrl: string = "http://a.com/api/v1/categories";
 
-describe("category.rounter", async () => {
+describe("category", async () => {
   const authHeader = {
     Authorization: `Bearer ${await tokener({ gty: M2M_TOKEN_TYPE })}`,
   };
-  describe("create & select category", () => {
-    it("should create a new category & return it", async () => {
+  describe("create", () => {
+    it("admin: enable create a new category", async () => {
       const ctx = createExecutionContext();
       const res = await app.fetch(
         new Request(baseUrl, {
@@ -40,10 +40,12 @@ describe("category.rounter", async () => {
       expect(d.name).toStrictEqual("ML/AI");
       expect(res.status).toBe(201);
     });
+    it("admin: unable to create a new invalid cate", async () => {});
+    it("user: unable to create a new cate", async () => {});
   });
 
-  describe("search categories", () => {
-    it("should return empty categories", async () => {
+  describe("search", () => {
+    it("all: enable to list all active cate", async () => {
       const ctx = createExecutionContext();
       const res = await app.fetch(
         new Request(baseUrl, { headers: authHeader }),
@@ -54,5 +56,17 @@ describe("category.rounter", async () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toStrictEqual([]);
     });
+    it("user: only admin enable to view inactive/pending cate", async () => {});
+  });
+
+  describe("select", () => {
+    it("all: enable to retrive a active cate", async () => {});
+    it("user: only admin enable to view inactive/pending cate", async () => {});
+  });
+
+  describe("update", () => {
+    it("admin: enable to update existing cate", async () => {});
+    it("admin: unable to update cate with invalid data", async () => {});
+    it("user: has no right to update a cate", async () => {});
   });
 });
