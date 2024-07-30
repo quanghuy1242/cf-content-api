@@ -1,20 +1,22 @@
 import app from "../src";
 import { withPrismaFromW } from "../src/services/prisma";
+import { tokener } from "./helpers/auth";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
+import { M2M_TOKEN_TYPE } from "const";
 import { randomUUID } from "crypto";
-import { describe, beforeEach, vi, it, expect } from "vitest";
+import { User } from "schema/generated/zod";
+import { describe, it, expect } from "vitest";
 
 const baseUrl: string = "http://a.com/api/v1/users";
 
-describe("user.rounter", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
+describe("user.rounter", async () => {
+  const authHeader = {
+    Authorization: `Bearer ${await tokener({ gty: M2M_TOKEN_TYPE })}`,
+  };
   describe("create & select user", () => {
     it("should create a new user & return it", async () => {
       // Insert it first
@@ -24,6 +26,7 @@ describe("user.rounter", () => {
           method: "post",
           headers: {
             "Content-Type": "application/json",
+            ...authHeader,
           },
           body: JSON.stringify({
             id: randomUUID(),
@@ -36,7 +39,9 @@ describe("user.rounter", () => {
       );
       await waitOnExecutionContext(ctx);
       expect(res.status).toBe(201);
-      expect((await res.json()).name).toStrictEqual("Huy Quang Nguyen");
+
+      const d: User = await res.json();
+      expect(d.name).toStrictEqual("Huy Quang Nguyen");
       expect(await withPrismaFromW(env).user.count()).toBe(1);
     });
 
@@ -49,7 +54,7 @@ describe("user.rounter", () => {
       };
       await withPrismaFromW(env).user.create({ data });
       const res = await app.fetch(
-        new Request(baseUrl + "/" + data.id),
+        new Request(baseUrl + "/" + data.id, { headers: authHeader }),
         env,
         ctx,
       );

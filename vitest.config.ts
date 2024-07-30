@@ -10,7 +10,12 @@ export default defineWorkersConfig(async () => {
   const migrations = await readD1Migrations(migrationsPath);
   return {
     test: {
-      setupFiles: ["./tests/apply-migrations.ts"],
+      include: ["./tests/**/*.test.ts"],
+      // include: ["tests/contents.test.ts"],
+      setupFiles: [
+        "./tests/apply-migrations.ts",
+        "./tests/apply-fetch-mock.ts",
+      ],
       poolOptions: {
         workers: {
           singleWorker: true,

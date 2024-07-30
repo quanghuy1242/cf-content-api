@@ -1,25 +1,24 @@
 import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
-import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
-import { DbConstraintException } from "exceptions";
-import { Hono } from "hono";
+import { ContentPermission, X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
+import { AuthForbidException, DbConstraintException } from "exceptions";
+import { Context, Hono } from "hono";
 import { auth } from "middlewares/auth";
 import { restrict, restrictStatusField } from "middlewares/permission";
+import { StatusEnum } from "schema/content";
 import {
   ContentSchema,
   ContentUncheckedCreateInputSchema,
-  ContentUpdateInputSchema,
+  ContentUncheckedUpdateInputSchema,
 } from "schema/generated/zod";
 import { withPrisma } from "services/prisma";
+import { isAdmin } from "utils/auth";
 import { z } from "zod";
 
 const contents = new Hono<HonoApp>().basePath("/contents");
 
-contents.use(auth);
-
 contents.get(
   "/:id",
-  restrict(["read:content"]),
   zValidator(
     "param",
     z.object({
@@ -30,6 +29,7 @@ contents.get(
     const content = await withPrisma(c).content.findFirst({
       where: {
         id: c.req.valid("param").id,
+        ...withAuthQuery(c),
       },
     });
     if (!content) {
@@ -41,11 +41,13 @@ contents.get(
 
 contents.post(
   "",
-  restrict(["write:content"]),
+  auth,
+  restrict([ContentPermission.write]),
   zValidator("json", ContentUncheckedCreateInputSchema),
   async (c) => {
     const input = c.req.valid("json");
-    restrictStatusField(c, input.status, "publish:content");
+    withMutationCheck(c, input);
+    restrictStatusField(c, input.status, ContentPermission.publish);
     const data = await withPrisma(c).content.create({ data: input });
     return c.json(ContentSchema.parse(data), 201);
   },
@@ -53,12 +55,11 @@ contents.post(
 
 contents.get(
   "",
-  restrict(["read:content"]),
   zValidator(
     "query",
     z.object({
       title: z.string().optional(),
-      status: z.enum(["ACTIVE", "PENDING", "INACTIVE"]).optional(),
+      status: StatusEnum.optional(),
       userId: z.string().optional(),
       categoryId: z.string().optional(),
       page: z.number().default(1),
@@ -74,6 +75,7 @@ contents.get(
       ...(userId ? { userId } : {}),
       ...(status ? { status } : { status: "ACTIVE" }),
       ...(categoryId ? { categoryId } : {}),
+      ...withAuthQuery(c),
     };
     const count = await p.content.count({ where: baseQuery });
     const data = await p.content.findMany({
@@ -92,10 +94,14 @@ contents.get(
 
 contents.patch(
   "/:id",
-  restrict(["write:content"]),
-  zValidator("json", ContentUpdateInputSchema),
+  auth,
+  restrict([ContentPermission.write]),
+  zValidator("json", ContentUncheckedUpdateInputSchema),
   zValidator("param", z.object({ id: z.string().uuid() })),
   async (c) => {
+    const input = c.req.valid("json");
+    withMutationCheck(c, input);
+
     const p = withPrisma(c);
     const baseQuery = { id: c.req.valid("param").id };
     const data = await p.content.findFirst({
@@ -104,13 +110,65 @@ contents.patch(
     if (!data) {
       throw new DbConstraintException({ message: "Not found" });
     }
-    restrictStatusField(c, data.status, "publish:content");
+    restrictStatusField(c, data.status, ContentPermission.publish);
     const content = await p.content.update({
       where: baseQuery,
-      data: c.req.valid("json"),
+      data: input,
     });
     return c.json(ContentSchema.parse(content), 204);
   },
 );
+
+const withAuthQuery = (
+  c: Context<HonoApp, string, object>,
+): Prisma.ContentWhereInput => {
+  let payload = c.get("user")?.payload;
+  if (!payload) {
+    payload = {
+      sub: "anyone",
+    };
+  }
+  let query: Prisma.ContentWhereInput = {};
+  if (isAdmin(c)) {
+    return query;
+  }
+  query = {
+    ...query,
+    OR: [
+      {
+        AND: [
+          {
+            userId: payload.sub,
+          },
+        ],
+      },
+      {
+        AND: [
+          {
+            userId: { not: payload.sub },
+          },
+          {
+            status: "ACTIVE",
+          },
+        ],
+      },
+    ],
+  };
+  return query;
+};
+
+const withMutationCheck = (
+  c: Context<HonoApp, string, object>,
+  data:
+    | z.infer<typeof ContentUncheckedCreateInputSchema>
+    | z.infer<typeof ContentUncheckedUpdateInputSchema>,
+): void => {
+  const payload = c.get("user")?.payload;
+  if (!isAdmin(c) || (payload && payload.sub == data.userId) || !payload) {
+    throw new AuthForbidException({
+      message: "You don't have permission to perform this action",
+    });
+  }
+};
 
 export default contents;

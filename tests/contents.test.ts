@@ -1,20 +1,22 @@
 import app from "../src";
-import { withPrismaFromW } from "../src/services/prisma";
+import { tokener } from "./helpers/auth";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
+import { M2M_TOKEN_TYPE } from "const";
 import { randomUUID } from "crypto";
-import { describe, beforeEach, vi, it, expect } from "vitest";
+import { Content } from "schema/generated/zod";
+import { withPrismaFromW } from "services/prisma";
+import { describe, it, expect } from "vitest";
 
-const baseUrl: string = "http://a.com/api/v1/contents";
+const baseUrl: string = "https://a.com/api/v1/contents";
 
-describe("content.rounter", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
+describe("content.rounter", async () => {
+  const authHeader = {
+    Authorization: `Bearer ${await tokener({ gty: M2M_TOKEN_TYPE })}`,
+  };
   describe("create & select content", () => {
     it("should create a new content & return it", async () => {
       const ctx = createExecutionContext();
@@ -38,6 +40,7 @@ describe("content.rounter", () => {
           method: "post",
           headers: {
             "Content-Type": "application/json",
+            ...authHeader,
           },
           body: JSON.stringify({
             title: "Content title",
@@ -57,7 +60,9 @@ describe("content.rounter", () => {
         ctx,
       );
       await waitOnExecutionContext(ctx);
-      expect((await res.json()).title).toStrictEqual("Content title");
+
+      const d: Content = await res.json();
+      expect(d.title).toStrictEqual("Content title");
       expect(res.status).toBe(201);
     });
   });
