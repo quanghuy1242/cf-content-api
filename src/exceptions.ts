@@ -28,7 +28,6 @@ export class DbConstraintException extends HTTPException {
 }
 
 export const exceptionHander: ErrorHandler = (err, c) => {
-  console.error(err);
   if (err instanceof AuthException) {
     return c.text(err.message, err.status);
   }
@@ -47,5 +46,7 @@ export const exceptionHander: ErrorHandler = (err, c) => {
       400,
     );
   }
+  // Unexpected exceptions are fine to log
+  console.error(err);
   return c.text("Unknown error!", 500);
 };
