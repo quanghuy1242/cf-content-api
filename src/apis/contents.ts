@@ -164,11 +164,12 @@ const withMutationCheck = (
     | z.infer<typeof ContentUncheckedUpdateInputSchema>,
 ): void => {
   const payload = c.get("user")?.payload;
-  if (!isAdmin(c) || (payload && payload.sub == data.userId) || !payload) {
-    throw new AuthForbidException({
-      message: "You don't have permission to perform this action",
-    });
+  if (isAdmin(c) || (payload && payload.sub === data.userId)) {
+    return;
   }
+  throw new AuthForbidException({
+    message: "You don't have permission to perform this action",
+  });
 };
 
 export default contents;

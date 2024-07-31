@@ -1,22 +1,18 @@
 import app from "../src";
 import { withPrismaFromW } from "../src/services/prisma";
-import { tokener } from "./helpers/auth";
+import { htokener } from "./helpers/auth";
 import { createUser } from "./helpers/data";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
-import { M2M_TOKEN_TYPE } from "const";
 import { User } from "schema/generated/zod";
 import { describe, it, expect } from "vitest";
 
 const baseUrl: string = "http://a.com/api/v1/users";
 
 describe("user", async () => {
-  const authHeader = {
-    Authorization: `Bearer ${await tokener({ gty: M2M_TOKEN_TYPE })}`,
-  };
   describe("create", () => {
     it("admin: enable create a new user & return it", async () => {
       // Insert it first
@@ -26,7 +22,7 @@ describe("user", async () => {
           method: "post",
           headers: {
             "Content-Type": "application/json",
-            ...authHeader,
+            ...(await htokener.m2m()),
           },
           body: JSON.stringify(createUser()),
         }),
@@ -53,7 +49,7 @@ describe("user", async () => {
       const data = createUser();
       await withPrismaFromW(env).user.create({ data });
       const res = await app.fetch(
-        new Request(baseUrl + "/" + data.id, { headers: authHeader }),
+        new Request(baseUrl + "/" + data.id, { headers: await htokener.m2m() }),
         env,
         ctx,
       );

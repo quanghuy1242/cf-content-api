@@ -28,6 +28,7 @@ export class DbConstraintException extends HTTPException {
 }
 
 export const exceptionHander: ErrorHandler = (err, c) => {
+  console.debug(err)
   if (err instanceof AuthException) {
     return c.text(err.message, err.status);
   }

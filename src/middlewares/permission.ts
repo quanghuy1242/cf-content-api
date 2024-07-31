@@ -21,7 +21,7 @@ export const restrict = (permissions: string[]) => {
 
     const payload = c.get("user")?.payload || { permissions: [] };
     const givenPermissions = (payload["permissions"] as string[]) || [];
-    if (!givenPermissions.every((p) => permissions.includes(p))) {
+    if (!permissions.every((p) => givenPermissions.includes(p))) {
       throw new AuthForbidException({
         message: "You don't have permissions to access!",
       });

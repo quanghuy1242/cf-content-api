@@ -1,3 +1,5 @@
+import { ContentPermission, M2M_TOKEN_TYPE } from "const";
+import { randomUUID } from "crypto";
 import { AlgorithmTypes } from "hono/utils/jwt/jwa";
 import {
   exportJWK,
@@ -7,6 +9,16 @@ import {
   SignJWT,
 } from "jose";
 
+type ITokener = {
+  (
+    payload?: JWTPayload,
+    audience?: string,
+    issuer?: string,
+    sub?: string,
+    expTime?: string | Date | number,
+  ): Promise<string>;
+};
+
 export const authgen = async () => {
   const alg = AlgorithmTypes.ES256;
 
@@ -15,7 +27,7 @@ export const authgen = async () => {
   const kid = await calculateJwkThumbprint(jwk);
   const jwks = { keys: [{ ...jwk, kid, use: "sig", alg }] };
 
-  const tokener = async (
+  const tokener: ITokener = async (
     payload: JWTPayload = {},
     audience: string = "https://api.quanghuy.dev",
     issuer: string = "https://quanghuy1242.us.auth0.com/",
@@ -25,14 +37,61 @@ export const authgen = async () => {
     new SignJWT(payload)
       .setProtectedHeader({ alg, kid })
       .setIssuedAt()
-      .setAudience(audience)
-      .setExpirationTime(expTime)
-      .setIssuer(issuer)
-      .setSubject(sub)
+      .setAudience(payload.aud || audience)
+      .setExpirationTime(payload.exp || expTime)
+      .setIssuer(payload.iss || issuer)
+      .setSubject(payload.sub || sub)
       .sign(privateKey);
   return { jwks, tokener };
 };
 
+class HTokener {
+  #tokener: ITokener;
+  #namespace: string;
+  #clientId: string;
+  #headerFactory = (token: string): { Authorization: string } => {
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  constructor(tokener: ITokener, namespace: string, clientId: string) {
+    this.#tokener = tokener;
+    this.#namespace = namespace;
+    this.#clientId = clientId;
+  }
+
+  async m2m() {
+    return this.#headerFactory(await this.#tokener({ gty: M2M_TOKEN_TYPE }));
+  }
+
+  async admin() {
+    return this.#headerFactory(
+      await this.#tokener({
+        gty: "openid",
+        [`${this.#namespace}roles`]: ["Admin"],
+        permissions: Object.values(ContentPermission),
+        sub: this.#clientId + "@clients",
+      }),
+    );
+  }
+
+  async user(userId?: string) {
+    return this.#headerFactory(
+      await this.#tokener({
+        gty: "openid",
+        [`${this.#namespace}roles`]: [],
+        permissions: Object.values(ContentPermission),
+        sub: userId || randomUUID(),
+      }),
+    );
+  }
+}
+
 const { jwks, tokener } = await authgen();
 
-export { jwks, tokener };
+export { jwks };
+
+export const htokener = new HTokener(
+  tokener,
+  "api.quanghuy.dev/",
+  "2YoFQibhNG7lKkaATofzxkQHYXVfHImt",
+);

@@ -45,11 +45,6 @@ async function createRemoteJWKSet(ctx: Context, issuer: string, env: string) {
 export const auth = createMiddleware(async (c: Context, next) => {
   const { AUTH0_AUDIENCE, AUTH0_ISSUER, ENVIRONMENT }: Env = env(c);
 
-  if (ENVIRONMENT == "dev") {
-    await next();
-    return;
-  }
-
   const authHeader = c.req.header(AUTH_HEADER_KEY);
   const token = extractToken(authHeader);
 

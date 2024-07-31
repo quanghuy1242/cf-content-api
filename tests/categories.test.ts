@@ -1,21 +1,17 @@
 import app from "../src";
-import { tokener } from "./helpers/auth";
+import { htokener } from "./helpers/auth";
 import { createCate } from "./helpers/data";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
-import { M2M_TOKEN_TYPE } from "const";
 import { Category } from "schema/generated/zod";
 import { describe, it, expect } from "vitest";
 
 const baseUrl: string = "http://a.com/api/v1/categories";
 
 describe("category", async () => {
-  const authHeader = {
-    Authorization: `Bearer ${await tokener({ gty: M2M_TOKEN_TYPE })}`,
-  };
   describe("create", () => {
     it("admin: enable create a new category", async () => {
       const ctx = createExecutionContext();
@@ -24,7 +20,7 @@ describe("category", async () => {
           method: "post",
           headers: {
             "Content-Type": "application/json",
-            ...authHeader,
+            ...(await htokener.m2m()),
           },
           body: JSON.stringify(createCate()),
         }),
@@ -45,7 +41,7 @@ describe("category", async () => {
     it("all: enable to list all active cate", async () => {
       const ctx = createExecutionContext();
       const res = await app.fetch(
-        new Request(baseUrl, { headers: authHeader }),
+        new Request(baseUrl, { headers: await htokener.m2m() }),
         env,
         ctx,
       );

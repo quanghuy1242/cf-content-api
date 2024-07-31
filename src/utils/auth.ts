@@ -19,7 +19,7 @@ export const isAdmin = (
   c: Context<HonoApp, string, object>,
   allowRole: boolean = true,
 ) => {
-  const { ENVIRONMENT, AUTH0_NAMESPACE, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } = env(
+  const { AUTH0_NAMESPACE, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } = env(
     c,
   ) as unknown as Env;
   const payload = c.get("user")?.payload;
@@ -31,9 +31,9 @@ export const isAdmin = (
     roles = ["Admin"];
   }
 
-  return (
-    isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE) ||
-    ENVIRONMENT == "dev" ||
-    (allowRole && !roles.includes("Admin"))
+  return !(
+    !isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE) &&
+    allowRole &&
+    !roles.includes("Admin")
   );
 };
