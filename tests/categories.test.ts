@@ -1,5 +1,6 @@
 import app from "../src";
 import { tokener } from "./helpers/auth";
+import { createCate } from "./helpers/data";
 import {
   env,
   createExecutionContext,
@@ -25,11 +26,7 @@ describe("category", async () => {
             "Content-Type": "application/json",
             ...authHeader,
           },
-          body: JSON.stringify({
-            name: "ML/AI",
-            description: "Merchean Learning & Artifical Inteligient",
-            status: "ACTIVE",
-          }),
+          body: JSON.stringify(createCate()),
         }),
         env,
         ctx,

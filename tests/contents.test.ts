@@ -1,12 +1,12 @@
 import app from "../src";
 import { tokener } from "./helpers/auth";
+import { createCate, createContent, createUser } from "./helpers/data";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
 import { M2M_TOKEN_TYPE } from "const";
-import { randomUUID } from "crypto";
 import { Content } from "schema/generated/zod";
 import { withPrismaFromW } from "services/prisma";
 import { describe, it, expect } from "vitest";
@@ -20,21 +20,11 @@ describe("content", async () => {
   describe("create", () => {
     it("admin: enable to create a new content", async () => {
       const ctx = createExecutionContext();
+      // Prepare data
       const p = withPrismaFromW(env);
-      const user = await p.user.create({
-        data: {
-          id: randomUUID(),
-          name: "Huy Quang Nguyen",
-          emailAddress: "huy@quanghuy.dev",
-        },
-      });
-      const category = await p.category.create({
-        data: {
-          name: "ML/AI",
-          description: "Merchean Learning & Artifical Inteligient",
-          status: "ACTIVE",
-        },
-      });
+      const user = await p.user.create({ data: createUser() });
+      const category = await p.category.create({ data: createCate() });
+      // Post it
       const res = await app.fetch(
         new Request(baseUrl, {
           method: "post",
@@ -42,19 +32,7 @@ describe("content", async () => {
             "Content-Type": "application/json",
             ...authHeader,
           },
-          body: JSON.stringify({
-            title: "Content title",
-            slug: "content-title",
-            content: "This contains a long text",
-            coverImage: "https://abc.com/abc.png",
-            tags: ["abc", "def"],
-            meta: {
-              twitterCard: "abc",
-            },
-            status: "ACTIVE",
-            userId: user.id,
-            categoryId: category.id,
-          }),
+          body: JSON.stringify(createContent(user.id, category.id)),
         }),
         env,
         ctx,

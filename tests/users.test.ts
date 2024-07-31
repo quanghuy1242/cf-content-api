@@ -1,13 +1,13 @@
 import app from "../src";
 import { withPrismaFromW } from "../src/services/prisma";
 import { tokener } from "./helpers/auth";
+import { createUser } from "./helpers/data";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
 import { M2M_TOKEN_TYPE } from "const";
-import { randomUUID } from "crypto";
 import { User } from "schema/generated/zod";
 import { describe, it, expect } from "vitest";
 
@@ -28,11 +28,7 @@ describe("user", async () => {
             "Content-Type": "application/json",
             ...authHeader,
           },
-          body: JSON.stringify({
-            id: randomUUID(),
-            name: "Huy Quang Nguyen",
-            emailAddress: "huy@quanghuy.dev",
-          }),
+          body: JSON.stringify(createUser()),
         }),
         env,
         ctx,
@@ -54,11 +50,7 @@ describe("user", async () => {
   describe("select", () => {
     it("admin: enable return an existing user", async () => {
       const ctx = createExecutionContext();
-      const data = {
-        id: randomUUID(),
-        name: "Huy Quang Nguyen",
-        emailAddress: "huy@quanghuy.dev",
-      };
+      const data = createUser();
       await withPrismaFromW(env).user.create({ data });
       const res = await app.fetch(
         new Request(baseUrl + "/" + data.id, { headers: authHeader }),
