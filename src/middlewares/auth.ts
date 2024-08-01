@@ -42,7 +42,7 @@ async function createRemoteJWKSet(ctx: Context, issuer: string, env: string) {
   return createLocalJWKSet(await resp.json());
 }
 
-export const auth = createMiddleware(async (c: Context, next) => {
+export const authMidHandler = async (c: Context) => {
   const { AUTH0_AUDIENCE, AUTH0_ISSUER, ENVIRONMENT }: Env = env(c);
 
   const authHeader = c.req.header(AUTH_HEADER_KEY);
@@ -58,5 +58,9 @@ export const auth = createMiddleware(async (c: Context, next) => {
     payload,
     protectedHeader,
   });
+};
+
+export const auth = createMiddleware(async (c: Context, next) => {
+  await authMidHandler(c);
   await next();
 });

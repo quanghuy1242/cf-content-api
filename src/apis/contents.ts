@@ -1,9 +1,14 @@
 import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
-import { ContentPermission, X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
+import {
+  AUTH_HEADER_KEY,
+  ContentPermission,
+  X_PAGE_COUNT_KEY,
+  X_RECORD_COUNT_KEY,
+} from "const";
 import { AuthForbidException, DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
-import { auth } from "middlewares/auth";
+import { auth, authMidHandler } from "middlewares/auth";
 import { restrict, restrictStatusField } from "middlewares/permission";
 import { StatusEnum } from "schema/content";
 import {
@@ -26,6 +31,9 @@ contents.get(
     }),
   ),
   async (c) => {
+    if (c.req.header(AUTH_HEADER_KEY)) {
+      await authMidHandler(c);
+    }
     const content = await withPrisma(c).content.findFirst({
       where: {
         id: c.req.valid("param").id,
@@ -67,6 +75,9 @@ contents.get(
     }),
   ),
   async (c) => {
+    if (c.req.header(AUTH_HEADER_KEY)) {
+      await authMidHandler(c);
+    }
     const { title, userId, status, categoryId, page, pageSize } =
       c.req.valid("query");
     const p = withPrisma(c);

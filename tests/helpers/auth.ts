@@ -74,12 +74,12 @@ class HTokener {
     );
   }
 
-  async user(userId?: string) {
+  async user(userId?: string, permissions?: Array<string>) {
     return this.#headerFactory(
       await this.#tokener({
         gty: "openid",
         [`${this.#namespace}roles`]: [],
-        permissions: Object.values(ContentPermission),
+        permissions: permissions || Object.values(ContentPermission),
         sub: userId || randomUUID(),
       }),
     );
