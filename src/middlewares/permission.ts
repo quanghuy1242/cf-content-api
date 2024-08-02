@@ -1,27 +1,11 @@
 import { AuthForbidException } from "exceptions";
 import { Context } from "hono";
-import { env } from "hono/adapter";
 import { createMiddleware } from "hono/factory";
-import { isValidM2m } from "utils/auth";
+import { isAdmin } from "utils/auth";
 
 export const adminOnly = createMiddleware(
   async (c: Context<HonoApp, string, object>, next) => {
-    const { ENVIRONMENT, AUTH0_NAMESPACE, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } =
-      env(c) as unknown as Env;
-    if (ENVIRONMENT == "dev") {
-      await next();
-      return;
-    }
-
-    const { payload } = c.get("user");
-
-    if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
-      await next();
-      return;
-    }
-
-    const roles = payload[`${AUTH0_NAMESPACE}roles`] as string[];
-    if (!roles.includes("Admin")) {
+    if (!isAdmin(c)) {
       throw new AuthForbidException({ message: "Missing permission!" });
     }
     await next();
@@ -30,23 +14,14 @@ export const adminOnly = createMiddleware(
 
 export const restrict = (permissions: string[]) => {
   return createMiddleware(async (c: Context<HonoApp, string, object>, next) => {
-    const { ENVIRONMENT, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } = env(
-      c,
-    ) as unknown as Env;
-    if (ENVIRONMENT == "dev") {
+    if (isAdmin(c, false)) {
       await next();
       return;
     }
 
-    const { payload } = c.get("user");
-
-    if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
-      await next();
-      return;
-    }
-
-    const givenPermissions = payload["permissions"] as string[];
-    if (!givenPermissions.every((p) => permissions.includes(p))) {
+    const payload = c.get("user")?.payload || { permissions: [] };
+    const givenPermissions = (payload["permissions"] as string[]) || [];
+    if (!permissions.every((p) => givenPermissions.includes(p))) {
       throw new AuthForbidException({
         message: "You don't have permissions to access!",
       });
@@ -60,18 +35,11 @@ export const restrictStatusField = (
   value: string,
   validPermission: string,
 ) => {
-  const { ENVIRONMENT, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } = env(
-    c,
-  ) as unknown as Env;
-  if (ENVIRONMENT == "dev") {
-    return;
-  }
-  const { payload } = c.get("user");
-
-  if (isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE)) {
+  if (isAdmin(c, false)) {
     return;
   }
 
+  const payload = c.get("user")?.payload || { permissions: [] };
   const givenPermissions = payload["permissions"] as string[];
   if (value === "ACTIVE" && !givenPermissions.includes(validPermission)) {
     throw new AuthForbidException({

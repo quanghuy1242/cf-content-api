@@ -1,22 +1,20 @@
 import app from "../src";
 import { withPrismaFromW } from "../src/services/prisma";
+import { htokener } from "./helpers/auth";
+import { createUser } from "./helpers/data";
 import {
   env,
   createExecutionContext,
   waitOnExecutionContext,
 } from "cloudflare:test";
-import { randomUUID } from "crypto";
-import { describe, beforeEach, vi, it, expect } from "vitest";
+import { User } from "schema/generated/zod";
+import { describe, it, expect } from "vitest";
 
 const baseUrl: string = "http://a.com/api/v1/users";
 
-describe("user.rounter", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
-  describe("create & select user", () => {
-    it("should create a new user & return it", async () => {
+describe("user", async () => {
+  describe("create", () => {
+    it("admin: enable create a new user & return it", async () => {
       // Insert it first
       const ctx = createExecutionContext();
       const res = await app.fetch(
@@ -24,32 +22,34 @@ describe("user.rounter", () => {
           method: "post",
           headers: {
             "Content-Type": "application/json",
+            ...(await htokener.m2m()),
           },
-          body: JSON.stringify({
-            id: randomUUID(),
-            name: "Huy Quang Nguyen",
-            emailAddress: "huy@quanghuy.dev",
-          }),
+          body: JSON.stringify(createUser()),
         }),
         env,
         ctx,
       );
       await waitOnExecutionContext(ctx);
       expect(res.status).toBe(201);
-      expect((await res.json()).name).toStrictEqual("Huy Quang Nguyen");
+
+      const d: User = await res.json();
+      expect(d.name).toStrictEqual("Huy Quang Nguyen");
       expect(await withPrismaFromW(env).user.count()).toBe(1);
     });
+    it("user: unable to create new users", async () => {});
+  });
 
-    it("should return an existing user", async () => {
+  describe("update", () => {
+    it("all: unable to updaet any users", async () => {});
+  });
+
+  describe("select", () => {
+    it("admin: enable return an existing user", async () => {
       const ctx = createExecutionContext();
-      const data = {
-        id: randomUUID(),
-        name: "Huy Quang Nguyen",
-        emailAddress: "huy@quanghuy.dev",
-      };
+      const data = createUser();
       await withPrismaFromW(env).user.create({ data });
       const res = await app.fetch(
-        new Request(baseUrl + "/" + data.id),
+        new Request(baseUrl + "/" + data.id, { headers: await htokener.m2m() }),
         env,
         ctx,
       );
@@ -57,5 +57,6 @@ describe("user.rounter", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toStrictEqual(data);
     });
+    it("user: unable to view any user", async () => {});
   });
 });

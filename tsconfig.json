@@ -30,6 +30,6 @@
 			"./worker-configuration.d.ts"
 		]
 	},
-	"exclude": ["node_modules", "dist", "tests", "./*.mjs"],
+	"exclude": ["node_modules", "dist", "./*.mjs"],
 	"include": ["src", "scripts", "./"]
 }

@@ -1,8 +1,8 @@
 interface HonoApp extends Env {
   Variables: {
     user: {
-      payload: import("jose").JWTPayload;
-      protectedHeader: import("jose").JWTHeaderParameters;
+      payload?: import("jose").JWTPayload;
+      protectedHeader?: import("jose").JWTHeaderParameters;
     };
   };
 }

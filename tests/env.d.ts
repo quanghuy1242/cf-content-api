@@ -1,4 +1,5 @@
 import { D1Database } from "@cloudflare/workers-types/experimental";
+import 'vitest-fetch-mock';
 
 declare module "cloudflare:test" {
   // Controls the type of `import("cloudflare:test").env`

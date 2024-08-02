@@ -2,8 +2,8 @@ import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
 import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { DbConstraintException } from "exceptions";
-import { Hono } from "hono";
-import { auth } from "middlewares/auth";
+import { Context, Hono } from "hono";
+import { authPrivate, authPublic } from "middlewares/auth";
 import { adminOnly } from "middlewares/permission";
 import {
   CategorySchema,
@@ -11,15 +11,14 @@ import {
   CategoryUpdateInputSchema,
 } from "schema/generated/zod";
 import { withPrisma } from "services/prisma";
+import { isAdmin } from "utils/auth";
 import { z } from "zod";
 
 const categories = new Hono<HonoApp>().basePath("/categories");
 
-categories.use(auth);
-categories.use(adminOnly);
-
 categories.get(
   "/:id",
+  authPublic,
   zValidator(
     "param",
     z.object({
@@ -30,6 +29,7 @@ categories.get(
     const content = await withPrisma(c).category.findFirst({
       where: {
         id: c.req.valid("param").id,
+        ...withAuthQuery(c),
       },
     });
     if (!content) {
@@ -41,6 +41,8 @@ categories.get(
 
 categories.post(
   "",
+  authPrivate,
+  adminOnly,
   zValidator("json", CategoryUncheckedCreateInputSchema),
   async (c) => {
     const input = c.req.valid("json");
@@ -51,6 +53,7 @@ categories.post(
 
 categories.get(
   "",
+  authPublic,
   zValidator(
     "query",
     z.object({
@@ -66,6 +69,7 @@ categories.get(
     const baseQuery: Prisma.CategoryWhereInput = {
       ...(name ? { name: { contains: name } } : {}),
       ...(status ? { status } : { status: "ACTIVE" }),
+      ...withAuthQuery(c),
     };
     const count = await p.category.count({ where: baseQuery });
     const data = await p.category.findMany({
@@ -84,6 +88,8 @@ categories.get(
 
 categories.patch(
   "/:id",
+  authPrivate,
+  adminOnly,
   zValidator("json", CategoryUpdateInputSchema),
   zValidator("param", z.object({ id: z.string().uuid() })),
   async (c) => {
@@ -102,5 +108,16 @@ categories.patch(
     return c.json(CategorySchema.parse(content), 204);
   },
 );
+
+const withAuthQuery = (
+  c: Context<HonoApp, string, object>,
+): Prisma.CategoryWhereInput => {
+  let query: Prisma.CategoryWhereInput = {};
+  if (isAdmin(c)) {
+    return query;
+  }
+  query = { ...query, status: "ACTIVE" };
+  return query;
+};
 
 export default categories;

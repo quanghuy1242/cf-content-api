@@ -19,36 +19,36 @@ function extractToken(authHeader: string | undefined): string {
   return token;
 }
 
-async function createRemoteJWKSet(ctx: Context, issuer: string) {
+async function createRemoteJWKSet(ctx: Context, issuer: string, env: string) {
   // Something needs to prepare
   const cacheUrl = new URL(`${issuer}.well-known/jwks.json`);
-  const cache = caches.default;
-  const cacheKey = new Request(cacheUrl.toString());
-
-  let resp = await cache.match(cacheKey);
-  if (!resp) {
-    console.info("Fetching jwk...");
+  let resp;
+  if (env === "test") {
     resp = await fetch(cacheUrl);
-    resp = new Response(resp.body, resp);
-    resp.headers.append("Cache-Control", "s-maxage=86400");
-    ctx.executionCtx.waitUntil(cache.put(cacheKey, resp.clone()));
+  } else {
+    const cache = caches.default;
+    const cacheKey = new Request(cacheUrl.toString());
+
+    resp = await cache.match(cacheKey);
+    if (!resp) {
+      console.info("Fetching jwk...");
+      resp = await fetch(cacheUrl);
+      resp = new Response(resp.body, resp);
+      resp.headers.append("Cache-Control", "s-maxage=86400");
+      ctx.executionCtx.waitUntil(cache.put(cacheKey, resp.clone()));
+    }
   }
+
   return createLocalJWKSet(await resp.json());
 }
 
-export const auth = createMiddleware(async (c: Context, next) => {
-  const { AUTH0_AUDIENCE, AUTH0_ISSUER, ENVIRONMENT }: Env =
-    env(c);
-
-  if (ENVIRONMENT == "dev") {
-    await next();
-    return;
-  }
+export const authMidHandler = async (c: Context) => {
+  const { AUTH0_AUDIENCE, AUTH0_ISSUER, ENVIRONMENT }: Env = env(c);
 
   const authHeader = c.req.header(AUTH_HEADER_KEY);
   const token = extractToken(authHeader);
 
-  const JWKS = await createRemoteJWKSet(c, AUTH0_ISSUER);
+  const JWKS = await createRemoteJWKSet(c, AUTH0_ISSUER, ENVIRONMENT);
   const { payload, protectedHeader } = await jwtVerify(token, JWKS, {
     issuer: AUTH0_ISSUER,
     audience: AUTH0_AUDIENCE,
@@ -58,5 +58,16 @@ export const auth = createMiddleware(async (c: Context, next) => {
     payload,
     protectedHeader,
   });
+};
+
+export const authPrivate = createMiddleware(async (c: Context, next) => {
+  await authMidHandler(c);
+  await next();
+});
+
+export const authPublic = createMiddleware(async (c: Context, next) => {
+  if (c.req.header(AUTH_HEADER_KEY)) {
+    await authMidHandler(c);
+  }
   await next();
 });
