@@ -13,7 +13,7 @@ import {
 } from "cloudflare:test";
 import { ContentPermission } from "const";
 import { randomUUID } from "crypto";
-import { Content } from "schema/generated/zod";
+import { Content, ContentSchema } from "schema/generated/zod";
 import { withPrismaFromW } from "services/prisma";
 import { describe, it, expect } from "vitest";
 
@@ -319,12 +319,166 @@ describe("content", async () => {
   });
 
   describe("update", () => {
-    it("admin: enable to update any content", async () => {});
-    it("user: enable to update their own content", async () => {});
-    it("user: unable to update others's content", async () => {});
-    it("user: has right to publish its content", async () => {});
-    it("user: unable to update with incorrect input", async () => {});
-    it("all: unable to update a content to unknown user", async () => {});
-    it("all: unable to update a content to unknown cate", async () => {});
+    it("admin: enable to update any content", async () => {
+      const ctx = createExecutionContext();
+      const { content2Inactive } = await createDb(withPrismaFromW(env));
+      const newTitle = randomUUID();
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content2Inactive.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.m2m()),
+          },
+          body: JSON.stringify({
+            title: newTitle,
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(204);
+      const d: Content = ContentSchema.parse(await res.json());
+      expect(d.title).toStrictEqual(newTitle);
+      expect(d.modified).greaterThan(content2Inactive.modified);
+    });
+    it("user: enable to update their own content", async () => {
+      const ctx = createExecutionContext();
+      const { content1Active, userA } = await createDb(withPrismaFromW(env));
+      const newTitle = randomUUID();
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content1Active.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.user(userA.id)),
+          },
+          body: JSON.stringify({
+            title: newTitle,
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(204);
+      const d: Content = ContentSchema.parse(await res.json());
+      expect(d.title).toStrictEqual(newTitle);
+      expect(d.modified).greaterThan(content1Active.modified);
+    });
+    it("user: unable to update others's content", async () => {
+      const ctx = createExecutionContext();
+      const { content1Active, userB } = await createDb(withPrismaFromW(env));
+      const newTitle = randomUUID();
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content1Active.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.user(userB.id)),
+          },
+          body: JSON.stringify({
+            title: newTitle,
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(403);
+    });
+    it("user: has right to publish its content", async () => {
+      const ctx = createExecutionContext();
+      const { content1Inactive, userA } = await createDb(withPrismaFromW(env));
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content1Inactive.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.user(userA.id)),
+          },
+          body: JSON.stringify({
+            status: "ACTIVE",
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(204);
+      const d: Content = ContentSchema.parse(await res.json());
+      expect(d.status).toStrictEqual("ACTIVE");
+      expect(d.modified).greaterThan(content1Inactive.modified);
+    });
+    it("user: unable to update with incorrect input", async () => {
+      const ctx = createExecutionContext();
+      const { content1Inactive, userA } = await createDb(withPrismaFromW(env));
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content1Inactive.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.user(userA.id)),
+          },
+          body: JSON.stringify({
+            status: "ACTIVEEE",
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(400);
+      expect(await res.text()).contain("invalid_enum_value");
+    });
+    it("all: unable to update a content to unknown user", async () => {
+      const ctx = createExecutionContext();
+      const { content2Inactive } = await createDb(withPrismaFromW(env));
+      const unknownUserId = randomUUID();
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content2Inactive.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.m2m()),
+          },
+          body: JSON.stringify({
+            userId: unknownUserId,
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(400);
+      expect(await res.text()).contain(
+        "Foreign key constraint failed on the field",
+      );
+    });
+    it("all: unable to update a content to unknown cate", async () => {
+      const ctx = createExecutionContext();
+      const { content2Inactive } = await createDb(withPrismaFromW(env));
+      const unknownCateId = randomUUID();
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content2Inactive.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.m2m()),
+          },
+          body: JSON.stringify({
+            categoryId: unknownCateId,
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(400);
+      expect(await res.text()).contain(
+        "Foreign key constraint failed on the field",
+      );
+    });
   });
 });

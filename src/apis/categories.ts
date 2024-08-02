@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { DbConstraintException } from "exceptions";
 import { Hono } from "hono";
-import { auth } from "middlewares/auth";
+import { authPrivate } from "middlewares/auth";
 import { adminOnly } from "middlewares/permission";
 import {
   CategorySchema,
@@ -14,9 +14,6 @@ import { withPrisma } from "services/prisma";
 import { z } from "zod";
 
 const categories = new Hono<HonoApp>().basePath("/categories");
-
-categories.use(auth);
-categories.use(adminOnly);
 
 categories.get(
   "/:id",
@@ -41,6 +38,8 @@ categories.get(
 
 categories.post(
   "",
+  authPrivate,
+  adminOnly,
   zValidator("json", CategoryUncheckedCreateInputSchema),
   async (c) => {
     const input = c.req.valid("json");
@@ -84,6 +83,8 @@ categories.get(
 
 categories.patch(
   "/:id",
+  authPrivate,
+  adminOnly,
   zValidator("json", CategoryUpdateInputSchema),
   zValidator("param", z.object({ id: z.string().uuid() })),
   async (c) => {

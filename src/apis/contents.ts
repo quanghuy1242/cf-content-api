@@ -8,7 +8,7 @@ import {
 } from "const";
 import { AuthForbidException, DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
-import { auth, authMidHandler } from "middlewares/auth";
+import { authPrivate, authMidHandler, authPublic } from "middlewares/auth";
 import { restrict, restrictStatusField } from "middlewares/permission";
 import { StatusEnum } from "schema/content";
 import {
@@ -24,6 +24,7 @@ const contents = new Hono<HonoApp>().basePath("/contents");
 
 contents.get(
   "/:id",
+  authPublic,
   zValidator(
     "param",
     z.object({
@@ -31,9 +32,6 @@ contents.get(
     }),
   ),
   async (c) => {
-    if (c.req.header(AUTH_HEADER_KEY)) {
-      await authMidHandler(c);
-    }
     const content = await withPrisma(c).content.findFirst({
       where: {
         id: c.req.valid("param").id,
@@ -49,7 +47,7 @@ contents.get(
 
 contents.post(
   "",
-  auth,
+  authPrivate,
   restrict([ContentPermission.write]),
   zValidator("json", ContentUncheckedCreateInputSchema),
   async (c) => {
@@ -63,6 +61,7 @@ contents.post(
 
 contents.get(
   "",
+  authPublic,
   zValidator(
     "query",
     z.object({
@@ -105,14 +104,12 @@ contents.get(
 
 contents.patch(
   "/:id",
-  auth,
+  authPrivate,
   restrict([ContentPermission.write]),
   zValidator("json", ContentUncheckedUpdateInputSchema),
   zValidator("param", z.object({ id: z.string().uuid() })),
   async (c) => {
     const input = c.req.valid("json");
-    withMutationCheck(c, input);
-
     const p = withPrisma(c);
     const baseQuery = { id: c.req.valid("param").id };
     const data = await p.content.findFirst({
@@ -121,6 +118,7 @@ contents.patch(
     if (!data) {
       throw new DbConstraintException({ message: "Not found" });
     }
+    withMutationCheck(c, {...data, ...input});
     restrictStatusField(c, data.status, ContentPermission.publish);
     const content = await p.content.update({
       where: baseQuery,

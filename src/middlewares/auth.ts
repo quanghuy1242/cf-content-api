@@ -60,7 +60,14 @@ export const authMidHandler = async (c: Context) => {
   });
 };
 
-export const auth = createMiddleware(async (c: Context, next) => {
+export const authPrivate = createMiddleware(async (c: Context, next) => {
   await authMidHandler(c);
+  await next();
+});
+
+export const authPublic = createMiddleware(async (c: Context, next) => {
+  if (c.req.header(AUTH_HEADER_KEY)) {
+    await authMidHandler(c);
+  }
   await next();
 });

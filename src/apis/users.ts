@@ -1,7 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { DbConstraintException } from "exceptions";
 import { Hono } from "hono";
-import { auth } from "middlewares/auth";
+import { authPrivate } from "middlewares/auth";
 import { adminOnly } from "middlewares/permission";
 import {
   UserSchema,
@@ -12,7 +12,7 @@ import { z } from "zod";
 
 const users = new Hono<HonoApp>().basePath("/users");
 
-users.use(auth);
+users.use(authPrivate);
 users.use(adminOnly);
 
 users.get(
