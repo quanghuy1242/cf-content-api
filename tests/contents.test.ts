@@ -194,9 +194,38 @@ describe("content", async () => {
       );
       await waitOnExecutionContext(ctx);
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(404);
       expect(await res.text()).contain(
-        "Foreign key constraint failed on the field",
+        "This category does not exist or isn't ready",
+      );
+    });
+    it("all: unable to create a content for a not ready cate", async () => {
+      const ctx = createExecutionContext();
+      // Prepare data
+      const p = withPrismaFromW(env);
+      const user = await p.user.create({ data: createUser() });
+      const category = await p.category.create({
+        data: createCate({ status: "INACTIVE" }),
+      });
+      const res = await app.fetch(
+        new Request(baseUrl, {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.user(user.id)),
+          },
+          body: JSON.stringify(
+            createContent(user.id, category.id, { status: "ACTIVE" }),
+          ),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+
+      expect(res.status).toBe(404);
+      expect(await res.text()).contain(
+        "This category does not exist or isn't ready",
       );
     });
   });
@@ -328,7 +357,7 @@ describe("content", async () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            ...(await htokener.m2m()),
+            ...(await htokener.admin()),
           },
           body: JSON.stringify({
             title: newTitle,
@@ -475,9 +504,36 @@ describe("content", async () => {
         ctx,
       );
       await waitOnExecutionContext(ctx);
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(404);
       expect(await res.text()).contain(
-        "Foreign key constraint failed on the field",
+        "This category does not exist or isn't ready",
+      );
+    });
+    it("admin: unnable to update to a not ready cate", async () => {
+      const ctx = createExecutionContext();
+      const p = withPrismaFromW(env);
+      const category = await p.category.create({
+        data: createCate({ name: "ABCDEF", status: "INACTIVE" }),
+      });
+      const { content2Inactive } = await createDb(p);
+      const res = await app.fetch(
+        new Request(baseUrl + "/" + content2Inactive.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.admin()),
+          },
+          body: JSON.stringify({
+            categoryId: category.id,
+          }),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(404);
+      expect(await res.text()).contain(
+        "This category does not exist or isn't ready",
       );
     });
   });

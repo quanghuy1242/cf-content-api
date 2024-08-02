@@ -60,16 +60,21 @@ class HTokener {
   }
 
   async m2m() {
-    return this.#headerFactory(await this.#tokener({ gty: M2M_TOKEN_TYPE }));
+    return this.#headerFactory(
+      await this.#tokener({
+        gty: M2M_TOKEN_TYPE,
+        sub: this.#clientId + "@clients",
+      }),
+    );
   }
 
-  async admin() {
+  async admin(userId?: string) {
     return this.#headerFactory(
       await this.#tokener({
         gty: "openid",
         [`${this.#namespace}roles`]: ["Admin"],
         permissions: Object.values(ContentPermission),
-        sub: this.#clientId + "@clients",
+        sub: userId || randomUUID(),
       }),
     );
   }

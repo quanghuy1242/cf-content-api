@@ -1,14 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
-import {
-  AUTH_HEADER_KEY,
-  ContentPermission,
-  X_PAGE_COUNT_KEY,
-  X_RECORD_COUNT_KEY,
-} from "const";
+import { ContentPermission, X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { AuthForbidException, DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
-import { authPrivate, authMidHandler, authPublic } from "middlewares/auth";
+import { authPrivate, authPublic } from "middlewares/auth";
 import { restrict, restrictStatusField } from "middlewares/permission";
 import { StatusEnum } from "schema/content";
 import {
@@ -54,7 +49,17 @@ contents.post(
     const input = c.req.valid("json");
     withMutationCheck(c, input);
     restrictStatusField(c, input.status, ContentPermission.publish);
-    const data = await withPrisma(c).content.create({ data: input });
+
+    const p = withPrisma(c);
+    const cate = await p.category.findFirst({
+      where: { id: input.categoryId },
+    });
+    if (!cate || cate.status !== "ACTIVE") {
+      throw new DbConstraintException({
+        message: "This category does not exist or isn't ready",
+      });
+    }
+    const data = await p.content.create({ data: input });
     return c.json(ContentSchema.parse(data), 201);
   },
 );
@@ -74,9 +79,6 @@ contents.get(
     }),
   ),
   async (c) => {
-    if (c.req.header(AUTH_HEADER_KEY)) {
-      await authMidHandler(c);
-    }
     const { title, userId, status, categoryId, page, pageSize } =
       c.req.valid("query");
     const p = withPrisma(c);
@@ -111,6 +113,16 @@ contents.patch(
   async (c) => {
     const input = c.req.valid("json");
     const p = withPrisma(c);
+    if (input.categoryId) {
+      const cate = await p.category.findFirst({
+        where: { id: input.categoryId.toString() },
+      });
+      if (!cate || cate.status !== "ACTIVE") {
+        throw new DbConstraintException({
+          message: "This category does not exist or isn't ready",
+        });
+      }
+    }
     const baseQuery = { id: c.req.valid("param").id };
     const data = await p.content.findFirst({
       where: baseQuery,
@@ -118,7 +130,7 @@ contents.patch(
     if (!data) {
       throw new DbConstraintException({ message: "Not found" });
     }
-    withMutationCheck(c, {...data, ...input});
+    withMutationCheck(c, { ...data, ...input });
     restrictStatusField(c, data.status, ContentPermission.publish);
     const content = await p.content.update({
       where: baseQuery,
@@ -131,12 +143,7 @@ contents.patch(
 const withAuthQuery = (
   c: Context<HonoApp, string, object>,
 ): Prisma.ContentWhereInput => {
-  let payload = c.get("user")?.payload;
-  if (!payload) {
-    payload = {
-      sub: "anyone",
-    };
-  }
+  const payload = c.get("user")?.payload || { sub: "anyone" };
   let query: Prisma.ContentWhereInput = {};
   if (isAdmin(c)) {
     return query;
