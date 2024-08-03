@@ -228,6 +228,34 @@ describe("content", async () => {
         "This category does not exist or isn't ready",
       );
     });
+    it("admin: unable to create a new content with invalid body", async () => {
+      const ctx = createExecutionContext();
+      // Prepare data
+      const p = withPrismaFromW(env);
+      const user = await p.user.create({ data: createUser() });
+      const category = await p.category.create({ data: createCate() });
+      // Post it
+      const res = await app.fetch(
+        new Request(baseUrl, {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.m2m()),
+          },
+          body: JSON.stringify(
+            createContent(user.id, category.id, { content: "abc" }),
+          ),
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+
+      expect(res.status).toBe(400);
+      expect(await res.text()).contain(
+        "Invalid body type, please check data source!",
+      );
+    });
   });
 
   describe("list", () => {

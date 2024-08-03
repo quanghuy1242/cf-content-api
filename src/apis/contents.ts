@@ -1,8 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { ContentPermission, X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { AuthForbidException, DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { authPrivate, authPublic } from "middlewares/auth";
 import { restrict, restrictStatusField } from "middlewares/permission";
 import { StatusEnum } from "schema/content";
@@ -48,17 +49,15 @@ contents.post(
   async (c) => {
     const input = c.req.valid("json");
     withMutationCheck(c, input);
+    if (!isLexicalState(input.content)) {
+      throw new HTTPException(400, {
+        message: "Invalid body type, please check data source!",
+      });
+    }
     restrictStatusField(c, input.status, ContentPermission.publish);
 
     const p = withPrisma(c);
-    const cate = await p.category.findFirst({
-      where: { id: input.categoryId },
-    });
-    if (!cate || cate.status !== "ACTIVE") {
-      throw new DbConstraintException({
-        message: "This category does not exist or isn't ready",
-      });
-    }
+    await isCategoryReady(p, input.categoryId.toString());
     const data = await p.content.create({ data: input });
     return c.json(ContentSchema.parse(data), 201);
   },
@@ -114,14 +113,7 @@ contents.patch(
     const input = c.req.valid("json");
     const p = withPrisma(c);
     if (input.categoryId) {
-      const cate = await p.category.findFirst({
-        where: { id: input.categoryId.toString() },
-      });
-      if (!cate || cate.status !== "ACTIVE") {
-        throw new DbConstraintException({
-          message: "This category does not exist or isn't ready",
-        });
-      }
+      await isCategoryReady(p, input.categoryId.toString());
     }
     const baseQuery = { id: c.req.valid("param").id };
     const data = await p.content.findFirst({
@@ -186,6 +178,29 @@ const withMutationCheck = (
   throw new AuthForbidException({
     message: "You don't have permission to perform this action",
   });
+};
+
+const isCategoryReady = async (p: PrismaClient, cateId: string) => {
+  const cate = await p.category.findFirst({
+    where: { id: cateId },
+  });
+  if (!cate || cate.status !== "ACTIVE") {
+    throw new DbConstraintException({
+      message: "This category does not exist or isn't ready",
+    });
+  }
+};
+
+const isLexicalState = (data: string) => {
+  try {
+    const state = JSON.parse(data);
+    if (!state?.editorState?.root) {
+      return false;
+    }
+  } catch (error) {
+    return false;
+  }
+  return true;
 };
 
 export default contents;
