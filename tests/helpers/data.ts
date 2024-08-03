@@ -36,7 +36,15 @@ export const createContent = (
   return {
     title: content.title || "Content title" + randomUUID(),
     slug: content.slug || "content-title" + randomUUID(),
-    content: content.content || "This contains a long text",
+    content:
+      content.content ||
+      JSON.stringify({
+        editorState: {
+          root: {
+            children: [],
+          },
+        },
+      }),
     coverImage: content.coverImage || "https://abc.com/abc.png",
     // @ts-expect-error json is ok
     tags: content.tags || ["abc", "def"],
