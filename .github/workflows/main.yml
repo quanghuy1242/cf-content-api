@@ -53,7 +53,7 @@ jobs:
           preCommands: npx wrangler d1 migrations apply contents-db-staging --remote -e staging
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: ["predeploy"]
+    needs: ["predeploy", "deploy-staging"]
     runs-on: ubuntu-latest
     name: Deploy to prod
     steps:
