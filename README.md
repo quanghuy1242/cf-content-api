@@ -39,3 +39,10 @@ npx wrangler d1 migrations create __YOUR_DATABASE_NAME__ create_post_table
 prisma migrate diff --from-local-d1 --to-schema-datamodel ./prisma/schema.prisma --script --output migrations/xxx_msg.sql
 npm run migration:local # npm run migration:remote
 ```
+
+
+## Staging set up
+```sh
+npx wrangler d1 create contents-db-staging
+npx wrangler d1 migrations apply contents-db-staging --remote -e staging
+```

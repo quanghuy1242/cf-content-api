@@ -4,6 +4,9 @@ main = "src/index.ts"
 compatibility_date = "2024-07-25"
 compatibility_flags = ["nodejs_compat"]
 
+[env.staging]
+workers_dev = true
+
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Worker, running it closer to your back-end infrastructure
 # rather than the end user may result in better performance.
@@ -22,6 +25,14 @@ AUTH0_AUDIENCE = "https://api.quanghuy.dev"
 AUTH0_NAMESPACE = "api.quanghuy.dev/"
 AUTH0_CLIENT_ID = "2YoFQibhNG7lKkaATofzxkQHYXVfHImt"
 ENVIRONMENT = "prod"
+
+
+[env.staging.vars]
+AUTH0_ISSUER = "https://quanghuy1242.us.auth0.com/"
+AUTH0_AUDIENCE = "https://api.quanghuy.dev"
+AUTH0_NAMESPACE = "api.quanghuy.dev/"
+AUTH0_CLIENT_ID = "2YoFQibhNG7lKkaATofzxkQHYXVfHImt"
+ENVIRONMENT = "staging"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#workers-ai
@@ -46,6 +57,11 @@ binding = "DB" # i.e. available in your Worker on env.DB
 # database_id = "f496f665-2ad4-4611-a7ca-3cf5c55c9102"
 database_name = "contents-db"
 database_id = "b5eb7d34-bc06-41a0-b71b-cc1fb0a24187"
+
+[[env.staging.d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "contents-db-staging"
+database_id = "3dedec04-7978-4e69-bb85-6d066fde0e5b"
 
 # Bind a dispatch namespace. Use Workers for Platforms to deploy serverless functions programmatically on behalf of your customers.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#dispatch-namespace-bindings-workers-for-platforms
