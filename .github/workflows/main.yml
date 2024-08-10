@@ -36,7 +36,7 @@ jobs:
   deploy-staging:
     needs: ["predeploy"]
     runs-on: ubuntu-latest
-    name: Deploy
+    name: Deploy to staging
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,12 +50,12 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env staging
-          preCommands: npx wrangler d1 migrations apply contents-db --remote -e staging
+          preCommands: npx wrangler d1 migrations apply contents-db-staging --remote -e staging
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: ["predeploy"]
     runs-on: ubuntu-latest
-    name: Deploy
+    name: Deploy to prod
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
