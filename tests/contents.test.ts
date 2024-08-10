@@ -316,6 +316,25 @@ describe("content", async () => {
       const d: Array<object> = await res.json();
       expect(d.length).toStrictEqual(1);
     });
+    it("user: enable to filter content by tag", async () => {
+      const ctx = createExecutionContext();
+      await createDb(withPrismaFromW(env));
+      const res = await app.fetch(
+        new Request(baseUrl + "?tag=123&tag=abc", {
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.admin()),
+          },
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(200);
+
+      const d: Array<object> = await res.json();
+      expect(d.length).toStrictEqual(2);
+    });
   });
 
   describe("select", () => {

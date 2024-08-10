@@ -64,7 +64,7 @@ export const createDb = async (p: PrismaClient) => {
   const category = await p.category.create({ data: createCate() });
   const content1Active = await p.content.create({
     data: createContent(userA.id, category.id, {
-      tags: "abc,def",
+      tags: "abc,def,123",
       meta: JSON.stringify({
         twitterCard: "abc",
       }),
@@ -73,7 +73,7 @@ export const createDb = async (p: PrismaClient) => {
   const content1Inactive = await p.content.create({
     data: createContent(userA.id, category.id, {
       status: "INACTIVE",
-      tags: "abc,def",
+      tags: "abc,def,123",
       meta: JSON.stringify({
         twitterCard: "abc",
       }),
@@ -81,7 +81,7 @@ export const createDb = async (p: PrismaClient) => {
   });
   const content2Active = await p.content.create({
     data: createContent(userB.id, category.id, {
-      tags: "abc,def",
+      tags: "abc,123,456",
       meta: JSON.stringify({
         twitterCard: "abc",
       }),
@@ -90,7 +90,7 @@ export const createDb = async (p: PrismaClient) => {
   const content2Inactive = await p.content.create({
     data: createContent(userB.id, category.id, {
       status: "INACTIVE",
-      tags: "abc,def",
+      tags: "abc,def,123",
       meta: JSON.stringify({
         twitterCard: "abc",
       }),
