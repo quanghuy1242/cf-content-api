@@ -73,7 +73,15 @@ contents.get(
       status: StatusEnum.optional(),
       userId: z.string().optional(),
       categoryId: z.string().optional(),
-      tag: z.string().array().optional(),
+      tag: z
+        .union([
+          z
+            .string()
+            .array()
+            .transform((strs) => new Set(strs)),
+          z.string().transform((str) => new Set(str)),
+        ])
+        .optional(),
       page: z.number().default(1),
       pageSize: z.number().max(100).default(10),
     }),
@@ -89,7 +97,7 @@ contents.get(
       ...(categoryId ? { categoryId } : {}),
       ...(tag
         ? {
-            AND: tag.map(
+            AND: Array.from(tag).map(
               (t) =>
                 ({
                   tags: {

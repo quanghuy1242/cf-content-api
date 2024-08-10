@@ -90,7 +90,7 @@ export const createDb = async (p: PrismaClient) => {
   const content2Inactive = await p.content.create({
     data: createContent(userB.id, category.id, {
       status: "INACTIVE",
-      tags: "abc,def,123",
+      tags: "abc,ghi,123",
       meta: JSON.stringify({
         twitterCard: "abc",
       }),

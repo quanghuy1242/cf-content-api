@@ -316,7 +316,7 @@ describe("content", async () => {
       const d: Array<object> = await res.json();
       expect(d.length).toStrictEqual(1);
     });
-    it("user: enable to filter content by tag", async () => {
+    it("user: enable to filter content by multiple tags", async () => {
       const ctx = createExecutionContext();
       await createDb(withPrismaFromW(env));
       const res = await app.fetch(
@@ -334,6 +334,25 @@ describe("content", async () => {
 
       const d: Array<object> = await res.json();
       expect(d.length).toStrictEqual(2);
+    });
+    it("user: enable to filter content by a single tag", async () => {
+      const ctx = createExecutionContext();
+      await createDb(withPrismaFromW(env));
+      const res = await app.fetch(
+        new Request(baseUrl + "?tag=ghi&status=INACTIVE", {
+          headers: {
+            "Content-Type": "application/json",
+            ...(await htokener.admin()),
+          },
+        }),
+        env,
+        ctx,
+      );
+      await waitOnExecutionContext(ctx);
+      expect(res.status).toBe(200);
+
+      const d: Array<object> = await res.json();
+      expect(d.length).toStrictEqual(1);
     });
   });
 
