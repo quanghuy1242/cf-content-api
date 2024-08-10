@@ -73,12 +73,13 @@ contents.get(
       status: StatusEnum.optional(),
       userId: z.string().optional(),
       categoryId: z.string().optional(),
+      tag: z.string().array().optional(),
       page: z.number().default(1),
       pageSize: z.number().max(100).default(10),
     }),
   ),
   async (c) => {
-    const { title, userId, status, categoryId, page, pageSize } =
+    const { title, userId, status, categoryId, tag, page, pageSize } =
       c.req.valid("query");
     const p = withPrisma(c);
     const baseQuery: Prisma.ContentWhereInput = {
@@ -86,6 +87,18 @@ contents.get(
       ...(userId ? { userId } : {}),
       ...(status ? { status } : { status: "ACTIVE" }),
       ...(categoryId ? { categoryId } : {}),
+      ...(tag
+        ? {
+            AND: tag.map(
+              (t) =>
+                ({
+                  tags: {
+                    contains: t,
+                  },
+                }) as Prisma.ContentWhereInput,
+            ),
+          }
+        : {}),
       ...withAuthQuery(c),
     };
     const count = await p.content.count({ where: baseQuery });
