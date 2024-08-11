@@ -149,7 +149,7 @@ contents.patch(
       where: baseQuery,
       data: input,
     });
-    return c.json(ContentSchema.parse(content), 204);
+    return c.json(ContentSchema.parse(content), 200);
   },
 );
 

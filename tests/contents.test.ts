@@ -453,7 +453,7 @@ describe("content", async () => {
         ctx,
       );
       await waitOnExecutionContext(ctx);
-      expect(res.status).toBe(204);
+      expect(res.status).toBe(200);
       const d: Content = ContentSchema.parse(await res.json());
       expect(d.title).toStrictEqual(newTitle);
       expect(d.modified).greaterThan(content2Inactive.modified);
@@ -477,7 +477,7 @@ describe("content", async () => {
         ctx,
       );
       await waitOnExecutionContext(ctx);
-      expect(res.status).toBe(204);
+      expect(res.status).toBe(200);
       const d: Content = ContentSchema.parse(await res.json());
       expect(d.title).toStrictEqual(newTitle);
       expect(d.modified).greaterThan(content1Active.modified);
@@ -521,7 +521,7 @@ describe("content", async () => {
         ctx,
       );
       await waitOnExecutionContext(ctx);
-      expect(res.status).toBe(204);
+      expect(res.status).toBe(200);
       const d: Content = ContentSchema.parse(await res.json());
       expect(d.status).toStrictEqual("ACTIVE");
       expect(d.modified).greaterThan(content1Inactive.modified);

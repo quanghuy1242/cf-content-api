@@ -105,7 +105,7 @@ categories.patch(
       where: baseQuery,
       data: c.req.valid("json"),
     });
-    return c.json(CategorySchema.parse(content), 204);
+    return c.json(CategorySchema.parse(content), 200);
   },
 );
 
