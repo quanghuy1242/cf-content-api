@@ -59,8 +59,8 @@ categories.get(
     z.object({
       name: z.string().optional(),
       status: z.enum(["ACTIVE", "PENDING", "INACTIVE"]).optional(),
-      page: z.number().default(1),
-      pageSize: z.number().max(100).default(10),
+      page: z.coerce.number().default(1),
+      pageSize: z.coerce.number().max(100).default(10),
     }),
   ),
   async (c) => {

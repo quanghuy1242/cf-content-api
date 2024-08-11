@@ -82,8 +82,8 @@ contents.get(
           z.string().transform((str) => new Set(str)),
         ])
         .optional(),
-      page: z.number().default(1),
-      pageSize: z.number().max(100).default(10),
+      page: z.coerce.number().default(1),
+      pageSize: z.coerce.number().max(100).default(10),
     }),
   ),
   async (c) => {
