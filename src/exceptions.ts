@@ -28,26 +28,31 @@ export class DbConstraintException extends HTTPException {
 }
 
 export const exceptionHander: ErrorHandler = (err, c) => {
-  console.debug(err)
+  console.debug(err);
   if (err instanceof AuthException) {
-    return c.text(err.message, err.status);
+    return c.json({ message: err.message }, err.status);
   }
   if (err instanceof errors.JOSEError) {
-    return c.text(`Authentication error: ${err.message}`, 401);
+    return c.json({ message: `Authentication error: ${err.message}` }, 401);
   }
   if (err instanceof DbConstraintException) {
-    return c.text(`Db constraints error: ${err.message}`, err.status);
+    return c.json(
+      { message: `Db constraints error: ${err.message}` },
+      err.status,
+    );
   }
   if (err instanceof HTTPException) {
-    return err.getResponse();
+    return c.json({ message: err.message }, err.status);
   }
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    return c.text(
-      `Bad request due to db: ${err.message} with code ${err.code}`,
+    return c.json(
+      {
+        message: `Bad request due to db: ${err.message} with code ${err.code}`,
+      },
       400,
     );
   }
   // Unexpected exceptions are fine to log
   console.error(err);
-  return c.text("Unknown error!", 500);
+  return c.json({ message: "Unknown error!" }, 500);
 };
