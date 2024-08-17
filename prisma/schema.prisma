@@ -41,9 +41,9 @@ model Content {
   id String @id @default(uuid()) /// @zod.custom.omit([input])
 
   title      String @unique
-  slug       String @unique /// @zod.string.regex(/^[a-z0-9-_]*$/)
+  slug       String @unique /// @zod.string.regex(/^[a-z0-9-_]*$/, {message: "Slug URL path must only contain alphabetic character, number and - or _"})
   content    String
-  coverImage String /// @zod.string.url()
+  coverImage String /// @zod.string.url({ message: "URL must be a correct url address" })
   tags       String /// @zod.custom.use(TagSchema)
   meta       String /// @zod.custom.use(MetaSchema)
   categoryId String

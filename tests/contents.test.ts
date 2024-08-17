@@ -168,7 +168,7 @@ describe("content", async () => {
 
       expect(res.status).toBe(400);
       expect(await res.text()).contain(
-        "Foreign key constraint failed on the field",
+        "You are trying to create record with unknown relationships",
       );
     });
     it("all: unable to create a content for unknown cate", async () => {
@@ -372,7 +372,7 @@ describe("content", async () => {
 
       const d: Array<object> = await res.json();
       expect(d.length).toStrictEqual(1);
-      expect(res.headers.get("X-Page-Count"), "2")
+      expect(res.headers.get("X-Page-Count"), "2");
     });
   });
 
@@ -568,7 +568,7 @@ describe("content", async () => {
       await waitOnExecutionContext(ctx);
       expect(res.status).toBe(400);
       expect(await res.text()).contain(
-        "Foreign key constraint failed on the field",
+        "You are trying to create record with unknown relationships",
       );
     });
     it("all: unable to update a content to unknown cate", async () => {

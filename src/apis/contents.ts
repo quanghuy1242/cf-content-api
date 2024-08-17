@@ -24,7 +24,7 @@ contents.get(
   zValidator(
     "param",
     z.object({
-      id: z.string().uuid(),
+      id: z.string().uuid({ message: "Content ID must be in UUID format" }),
     }),
   ),
   async (c) => {
@@ -83,8 +83,13 @@ contents.get(
         ])
         .optional(),
       page: z.coerce.number().default(1),
-      pageSize: z.coerce.number().max(100).default(10),
-    }),
+      pageSize: z.coerce
+        .number()
+        .max(100, {
+          message: "Max pageSize is limitted to 100, you can go any higher",
+        })
+        .default(10),
+    })
   ),
   async (c) => {
     const { title, userId, status, categoryId, tag, page, pageSize } =

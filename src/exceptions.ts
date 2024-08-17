@@ -45,9 +45,27 @@ export const exceptionHander: ErrorHandler = (err, c) => {
     return c.json({ message: err.message }, err.status);
   }
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === "P2002") {
+      return c.json(
+        {
+          message:
+            "The record already exist somehow, maybe title or slug are already used!",
+        },
+        400,
+      );
+    }
+    if (err.code === "P2003") {
+      return c.json(
+        {
+          message:
+            "You are trying to create record with unknown relationships (unknown category, unknown user)",
+        },
+        400,
+      );
+    }
     return c.json(
       {
-        message: `Bad request due to db: ${err.message} with code ${err.code}`,
+        message: `Bad request due to db handling`,
       },
       400,
     );

@@ -16,15 +16,24 @@ export const objToJson = (v: object) => {
   return JSON.stringify(v);
 };
 
-export const arrFromStr = z
+const tagBase = z
   .string()
-  .transform((str): z.arrayOutputType<z.ZodString> => {
-    return str.split(",");
+  .max(10, { message: "Tag item should only contain less than 10 chars" })
+  .array()
+  .max(10, { message: "Only 10 tags are accepted" });
+
+export const tagFromStr = z
+  .string()
+  .transform((str, ctx): z.arrayOutputType<z.ZodString> => {
+    const arr = str.split(",");
+    const result = tagBase.safeParse(arr);
+    if (!result.success) {
+      result.error.errors.forEach((i) => ctx.addIssue(i));
+      return z.NEVER;
+    }
+    return arr;
   });
 
-export const strFromArr = z
-  .string()
-  .array()
-  .transform((strs) => {
-    return strs.join(",");
-  });
+export const tagFromArr = tagBase.transform((strs) => {
+  return strs.join(",");
+});
