@@ -14,6 +14,7 @@ import {
 } from "schema/generated/zod";
 import { withPrisma } from "services/prisma";
 import { isAdmin } from "utils/auth";
+import { filterTag, tagQuery } from "utils/filter";
 import { z } from "zod";
 
 const contents = new Hono<HonoApp>().basePath("/contents");
@@ -73,15 +74,7 @@ contents.get(
       status: StatusEnum.optional(),
       userId: z.string().optional(),
       categoryId: z.string().optional(),
-      tag: z
-        .union([
-          z
-            .string()
-            .array()
-            .transform((strs) => new Set(strs)),
-          z.string().transform((str) => new Set(str)),
-        ])
-        .optional(),
+      tag: tagQuery,
       page: z.coerce.number().default(1),
       pageSize: z.coerce
         .number()
@@ -89,29 +82,19 @@ contents.get(
           message: "Max pageSize is limitted to 100, you can go any higher",
         })
         .default(10),
-    })
+    }),
   ),
   async (c) => {
     const { title, userId, status, categoryId, tag, page, pageSize } =
       c.req.valid("query");
     const p = withPrisma(c);
+    console.log(tag);
     const baseQuery: Prisma.ContentWhereInput = {
       ...(title ? { title: { contains: title } } : {}),
       ...(userId ? { userId } : {}),
       ...(status ? { status } : { status: "ACTIVE" }),
       ...(categoryId ? { categoryId } : {}),
-      ...(tag
-        ? {
-            AND: Array.from(tag).map(
-              (t) =>
-                ({
-                  tags: {
-                    contains: t,
-                  },
-                }) as Prisma.ContentWhereInput,
-            ),
-          }
-        : {}),
+      ...filterTag(tag),
       ...withAuthQuery(c),
     };
     const count = await p.content.count({ where: baseQuery });
