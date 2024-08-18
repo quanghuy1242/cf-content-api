@@ -25,7 +25,7 @@ const tagBase = z
 export const tagFromStr = z
   .string()
   .transform((str, ctx): z.arrayOutputType<z.ZodString> => {
-    const arr = str.split(",");
+    const arr = str.trim().split(",");
     const result = tagBase.safeParse(arr);
     if (!result.success) {
       result.error.errors.forEach((i) => ctx.addIssue(i));
@@ -35,5 +35,5 @@ export const tagFromStr = z
   });
 
 export const tagFromArr = tagBase.transform((strs) => {
-  return strs.join(",");
+  return strs.filter((t) => t !== "").join(",");
 });
