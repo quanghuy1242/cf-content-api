@@ -4,6 +4,7 @@ import {
   CategoryUncheckedCreateInputSchema,
   UserCreateInputSchema,
   ContentUncheckedCreateInputSchema,
+  ImageUncheckedCreateInputSchema,
 } from "schema/generated/zod";
 import { z } from "zod";
 
@@ -25,6 +26,20 @@ export const createCate = (
     description:
       cate.description || "Merchean Learning & Artifical Inteligient",
     status: cate.status || "ACTIVE",
+  };
+};
+
+export const createImage = (
+  image: Partial<z.infer<typeof ImageUncheckedCreateInputSchema>>,
+  userId: string,
+): z.infer<typeof ImageUncheckedCreateInputSchema> => {
+  return {
+    description: image.description || "",
+    contentType: image.contentType || "image/png",
+    size: image.size || 2000,
+    // @ts-expect-error json is ok
+    tags: image.tags || ["tag1", "tag2"],
+    userId: image.userId || userId,
   };
 };
 
@@ -96,6 +111,45 @@ export const createDb = async (p: PrismaClient) => {
       }),
     }),
   });
+  const image1 = await p.image.create({
+    data: {
+      ...createImage(
+        {
+          tags: "tag1,tag2",
+        },
+        userA.id,
+      ),
+      previewPath: "",
+      fullPath: "",
+      status: "ACTIVE",
+    },
+  });
+  const image2 = await p.image.create({
+    data: {
+      ...createImage(
+        {
+          tags: "tag1,tag2",
+        },
+        userA.id,
+      ),
+      previewPath: "",
+      fullPath: "",
+      status: "ACTIVE",
+    },
+  });
+  const image3 = await p.image.create({
+    data: {
+      ...createImage(
+        {
+          tags: "tag1,tag2",
+        },
+        userB.id,
+      ),
+      previewPath: "",
+      fullPath: "",
+      status: "ACTIVE",
+    },
+  });
   return {
     userA,
     userB,
@@ -104,5 +158,8 @@ export const createDb = async (p: PrismaClient) => {
     content1Inactive,
     content2Active,
     content2Inactive,
+    image1,
+    image2,
+    image3,
   };
 };

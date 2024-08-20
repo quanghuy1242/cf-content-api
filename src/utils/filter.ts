@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 export const tagQuery = z
@@ -53,8 +52,26 @@ export const filterTag = (tag: Set<string> | undefined) => {
                     },
                   },
                 ],
-              }) as Prisma.ContentWhereInput,
+              }),
           ),
       }
     : {};
 };
+
+export const paginationQuery = z.object({
+  page: z.coerce.number().default(1),
+  pageSize: z.coerce
+    .number()
+    .max(100, {
+      message: "Max pageSize is limitted to 100, you can go any higher",
+    })
+    .default(10),
+});
+
+export const filterPagination = ({
+  page,
+  pageSize,
+}: z.infer<typeof paginationQuery>) => ({
+  take: pageSize,
+  skip: (page - 1) * pageSize,
+});

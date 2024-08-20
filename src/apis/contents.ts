@@ -14,7 +14,12 @@ import {
 } from "schema/generated/zod";
 import { withPrisma } from "services/prisma";
 import { isAdmin } from "utils/auth";
-import { filterTag, tagQuery } from "utils/filter";
+import {
+  filterPagination,
+  filterTag,
+  paginationQuery,
+  tagQuery,
+} from "utils/filter";
 import { z } from "zod";
 
 const contents = new Hono<HonoApp>().basePath("/contents");
@@ -69,26 +74,20 @@ contents.get(
   authPublic,
   zValidator(
     "query",
-    z.object({
-      title: z.string().optional(),
-      status: StatusEnum.optional(),
-      userId: z.string().optional(),
-      categoryId: z.string().optional(),
-      tag: tagQuery,
-      page: z.coerce.number().default(1),
-      pageSize: z.coerce
-        .number()
-        .max(100, {
-          message: "Max pageSize is limitted to 100, you can go any higher",
-        })
-        .default(10),
-    }),
+    z
+      .object({
+        title: z.string().optional(),
+        status: StatusEnum.optional(),
+        userId: z.string().optional(),
+        categoryId: z.string().optional(),
+        tag: tagQuery,
+      })
+      .merge(paginationQuery),
   ),
   async (c) => {
     const { title, userId, status, categoryId, tag, page, pageSize } =
       c.req.valid("query");
     const p = withPrisma(c);
-    console.log(tag);
     const baseQuery: Prisma.ContentWhereInput = {
       ...(title ? { title: { contains: title } } : {}),
       ...(userId ? { userId } : {}),
@@ -103,8 +102,7 @@ contents.get(
       orderBy: {
         modified: "desc",
       },
-      take: pageSize,
-      skip: (page - 1) * pageSize,
+      ...filterPagination({ page, pageSize }),
     });
     c.header(X_RECORD_COUNT_KEY, count.toString());
     c.header(X_PAGE_COUNT_KEY, Math.ceil(count / pageSize).toString());
