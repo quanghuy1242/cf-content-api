@@ -5,6 +5,7 @@ import { DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
 import { authPrivate, authPublic } from "middlewares/auth";
 import { adminOnly } from "middlewares/permission";
+import { StatusEnum } from "schema/content";
 import {
   CategorySchema,
   CategoryUncheckedCreateInputSchema,
@@ -12,6 +13,7 @@ import {
 } from "schema/generated/zod";
 import { withPrisma } from "services/prisma";
 import { isAdmin } from "utils/auth";
+import { filterPagination, paginationQuery } from "utils/filter";
 import { z } from "zod";
 
 const categories = new Hono<HonoApp>().basePath("/categories");
@@ -56,12 +58,12 @@ categories.get(
   authPublic,
   zValidator(
     "query",
-    z.object({
-      name: z.string().optional(),
-      status: z.enum(["ACTIVE", "PENDING", "INACTIVE"]).optional(),
-      page: z.coerce.number().default(1),
-      pageSize: z.coerce.number().max(100).default(10),
-    }),
+    z
+      .object({
+        name: z.string().optional(),
+        status: StatusEnum.optional(),
+      })
+      .merge(paginationQuery),
   ),
   async (c) => {
     const { name, status, page, pageSize } = c.req.valid("query");
@@ -77,8 +79,7 @@ categories.get(
       orderBy: {
         modified: "desc",
       },
-      take: pageSize,
-      skip: (page - 1) * pageSize,
+      ...filterPagination({ page, pageSize }),
     });
     c.header(X_RECORD_COUNT_KEY, count.toString());
     c.header(X_PAGE_COUNT_KEY, Math.ceil(count / pageSize).toString());
