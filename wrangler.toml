@@ -63,7 +63,7 @@ database_name = "contents-db"
 database_id = "b5eb7d34-bc06-41a0-b71b-cc1fb0a24187"
 
 [[env.staging.d1_databases]]
-binding = "DB" # i.e. available in your Worker on env.DB
+binding = "DB"                                       # i.e. available in your Worker on env.DB
 database_name = "contents-db-staging"
 database_id = "3dedec04-7978-4e69-bb85-6d066fde0e5b"
 
@@ -123,9 +123,13 @@ preview_id = "6b04975883de4d64a1fd61c625d14de6"
 
 # Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#r2-buckets
-# [[r2_buckets]]
-# binding = "MY_BUCKET"
-# bucket_name = "my-bucket"
+[[r2_buckets]]
+binding = "IMAGE"
+bucket_name = "images-prod"
+
+[[env.staging.r2_buckets]]
+binding = "IMAGE"
+bucket_name = "images-staging"
 
 # Bind another Worker service. Use this binding to call another Worker without network overhead.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
