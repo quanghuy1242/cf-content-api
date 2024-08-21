@@ -7,6 +7,7 @@ import { Context, Hono } from "hono";
 import { env } from "hono/adapter";
 import { authPrivate } from "middlewares/auth";
 import { randomUUID } from "node:crypto";
+import { env as processEnv } from "node:process";
 import { StatusEnum } from "schema/content";
 import {
   ImageSchema,
@@ -22,8 +23,8 @@ import {
 import { z } from "zod";
 
 const r2 = new AwsClient({
-  accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+  accessKeyId: processEnv.R2_ACCESS_KEY_ID || "",
+  secretAccessKey: processEnv.R2_SECRET_ACCESS_KEY || "",
 });
 
 const images = new Hono<HonoApp>().basePath("/images");
