@@ -25,6 +25,8 @@ AUTH0_AUDIENCE = "https://api.quanghuy.dev"
 AUTH0_NAMESPACE = "api.quanghuy.dev/"
 AUTH0_CLIENT_ID = "2YoFQibhNG7lKkaATofzxkQHYXVfHImt"
 ENVIRONMENT = "prod"
+BUCKET_NAME = "images-prod"
+ACCOUNT_ID = "a774cdf63f6ad55020ab4d14824fe042"
 
 
 [env.staging.vars]
@@ -33,6 +35,8 @@ AUTH0_AUDIENCE = "https://api.quanghuy.dev"
 AUTH0_NAMESPACE = "api.quanghuy.dev/"
 AUTH0_CLIENT_ID = "2YoFQibhNG7lKkaATofzxkQHYXVfHImt"
 ENVIRONMENT = "staging"
+BUCKET_NAME = "images-staging"
+ACCOUNT_ID = "a774cdf63f6ad55020ab4d14824fe042"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#workers-ai
@@ -90,9 +94,10 @@ database_id = "3dedec04-7978-4e69-bb85-6d066fde0e5b"
 
 # Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#kv-namespaces
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+[[kv_namespaces]]
+binding = "R2PU"
+id = "4e0c4bf8f384423c832982e42951363a"
+preview_id = "9f35eb8785a042c4ba7bc1e77e48d68f"
 
 # Bind an mTLS certificate. Use to present a client certificate when communicating with another service.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#mtls-certificates

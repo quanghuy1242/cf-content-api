@@ -1,9 +1,11 @@
 import app from "../src";
 import { htokener } from "./helpers/auth";
 import { createDb, createImage, createUser } from "./helpers/data";
-import { createExecutionContext } from "cloudflare:test";
-import { waitOnExecutionContext } from "cloudflare:test";
-import { env } from "cloudflare:test";
+import {
+  createExecutionContext,
+  env,
+  waitOnExecutionContext,
+} from "cloudflare:test";
 import { Image } from "schema/generated/zod";
 import { withPrismaFromW } from "services/prisma";
 import { describe, expect, it } from "vitest";
@@ -32,6 +34,9 @@ describe("image", () => {
 
       const d: { uploadUrl: string; image: Image } = await res.json();
       expect(res.status).toBe(201);
+      expect(d.uploadUrl).contain( // Already mocked by miniflare
+        `r2.cloudflarestorage.com${d.image.fullPath}`,
+      );
       expect(d.image.status).toStrictEqual("PENDING");
     });
     it("user: unable to create other images", async () => {

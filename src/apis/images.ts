@@ -1,8 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
+import { AwsClient } from "aws4fetch";
 import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { AuthException, DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
+import { env } from "hono/adapter";
 import { authPrivate } from "middlewares/auth";
 import { randomUUID } from "node:crypto";
 import { StatusEnum } from "schema/content";
@@ -18,6 +20,11 @@ import {
   tagQuery,
 } from "utils/filter";
 import { z } from "zod";
+
+const r2 = new AwsClient({
+  accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+});
 
 const images = new Hono<HonoApp>().basePath("/images");
 
@@ -61,9 +68,29 @@ images.post(
         previewPath: "",
       },
     });
+
+    // Request presigned url for uploading
+    const { ACCOUNT_ID, BUCKET_NAME }: Env = env(c as Context);
+    const ttl = 5 * 60 * 60;
+    const signed = await r2.sign(
+      `https://${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com${data.fullPath}`,
+      {
+        method: "PUT",
+        aws: { signQuery: true, allHeaders: true },
+        headers: {
+          "X-Amz-Expires": ttl.toString(),
+          "Content-Type": data.contentType,
+          "Content-Length": data.size.toString(),
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Headers": "Content-Type, Content-Length",
+        },
+      },
+    );
+
     return c.json(
       {
-        uploadUrl: "", // TODO
+        uploadUrl: signed.url,
         image: ImageSchema.parse(data),
       },
       201,
