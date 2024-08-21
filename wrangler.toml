@@ -99,6 +99,11 @@ binding = "R2PU"
 id = "4e0c4bf8f384423c832982e42951363a"
 preview_id = "9f35eb8785a042c4ba7bc1e77e48d68f"
 
+[[env.staging.kv_namespaces]]
+binding = "R2PU"
+id = "3a83bed1623c46d98b39180b91b92178"
+preview_id = "6b04975883de4d64a1fd61c625d14de6"
+
 # Bind an mTLS certificate. Use to present a client certificate when communicating with another service.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#mtls-certificates
 # [[mtls_certificates]]
