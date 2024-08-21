@@ -72,7 +72,7 @@ images.post(
     });
 
     // Request presigned url for uploading
-    const ttl = 5 * 60 * 60;
+    const ttl = 5 * 60;
     const signed = await r2.sign(`${BASE_CF_IMAGE_URL}${data.fullPath}`, {
       method: "PUT",
       aws: { signQuery: true, allHeaders: true },
@@ -191,7 +191,11 @@ images.get(
     let cacheKey = await R2PU.get(imageKey);
 
     if (!cacheKey) {
-      const ttl = 5 * 60 * 60;
+      const ttlMap = {
+        view: 10 * 60, // Just in 10 minutes
+        preview: 5 * 60 * 60, // Previews are using wide range, 5h
+      };
+      const ttl = ttlMap[mode];
       const signed = await r2.sign(imageKey, {
         method: "GET",
         aws: { signQuery: true, allHeaders: true },
