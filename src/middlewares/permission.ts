@@ -14,7 +14,7 @@ export const adminOnly = createMiddleware(
 
 export const restrict = (permissions: string[]) => {
   return createMiddleware(async (c: Context<HonoApp, string, object>, next) => {
-    if (isAdmin(c, false)) {
+    if (isAdmin(c)) {
       await next();
       return;
     }
@@ -35,7 +35,7 @@ export const restrictStatusField = (
   value: string,
   validPermission: string,
 ) => {
-  if (isAdmin(c, false)) {
+  if (isAdmin(c)) {
     return;
   }
 
