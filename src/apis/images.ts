@@ -1,11 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
 import { Prisma } from "@prisma/client";
 import { AwsClient } from "aws4fetch";
-import { X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
+import { ImagePermission, X_PAGE_COUNT_KEY, X_RECORD_COUNT_KEY } from "const";
 import { AuthException, DbConstraintException } from "exceptions";
 import { Context, Hono } from "hono";
 import { env } from "hono/adapter";
 import { authPrivate } from "middlewares/auth";
+import { restrict } from "middlewares/permission";
 import { randomUUID } from "node:crypto";
 import { env as processEnv } from "node:process";
 import { StatusEnum } from "schema/content";
@@ -52,6 +53,7 @@ images.get(
 images.post(
   "",
   authPrivate,
+  restrict([ImagePermission.upload]),
   zValidator("json", ImageUncheckedCreateInputSchema),
   async (c) => {
     const input = c.req.valid("json");
@@ -99,6 +101,7 @@ images.post(
 images.post(
   "/:id/validate",
   authPrivate,
+  restrict([ImagePermission.upload]),
   zValidator("param", z.object({ id: z.string().uuid() })),
   async (c) => {
     // Fetch the image db

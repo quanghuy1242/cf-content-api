@@ -31,9 +31,8 @@ export const isAdmin = (
     roles = ["Admin"];
   }
 
-  return !(
-    !isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE) &&
-    allowRole &&
-    !roles.includes("Admin")
+  return (
+    isValidM2m(payload, AUTH0_CLIENT_ID, AUTH0_AUDIENCE) ||
+    (allowRole && roles.includes("Admin"))
   );
 };

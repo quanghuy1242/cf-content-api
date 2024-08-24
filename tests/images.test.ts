@@ -23,7 +23,7 @@ describe("image", () => {
           method: "post",
           headers: {
             "Content-Type": "application/json",
-            ...(await htokener.user(user.id)),
+            ...(await htokener.user(user.id, ["upload:image"])),
           },
           body: JSON.stringify(createImage({}, user.id)),
         }),
@@ -56,7 +56,7 @@ describe("image", () => {
         ctx,
       );
       await waitOnExecutionContext(ctx);
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(403);
     });
     it("admin: can't create other images", async () => {
       const ctx = createExecutionContext();
